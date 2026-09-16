@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>An agent's payment journey, with and without advice</title>
+<link rel="icon" href="data:,">
+<meta name="description" content="Three real agent checkout runs, each executed twice — once with merchant-specific advice in the prompt, once without.">
+<meta property="og:title" content="An agent's payment journey, with and without advice">
+<meta property="og:description" content="Both agents hit the same sign-in wall. Only one knew there was a door.">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1:  #fcfcfb;
+    --plane:      #f9f9f7;
+    --ink:        #0b0b0b;
+    --ink-2:      #52514e;
+    --muted:      #898781;
+    --grid:       #e1e0d9;
+    --baseline:   #c3c2b7;
+    --ring:       rgba(11,11,11,0.10);
+    --with:       #2a78d6;  /* accent: the advised run */
+    --without:    #898781;  /* de-emphasis gray: the unadvised run */
+    --good:       #0ca30c;
+    --good-ink:   #006300;
+    --critical:   #d03b3b;
+    --warning:    #fab219;
+    --wash:       rgba(42,120,214,0.07);
+    --wash-bad:   rgba(208,59,59,0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1: #1a1a19;
+      --plane:     #0d0d0d;
+      --ink:       #ffffff;
+      --ink-2:     #c3c2b7;
+      --muted:     #898781;
+      --grid:      #2c2c2a;
+      --baseline:  #383835;
+      --ring:      rgba(255,255,255,0.10);
+      --with:      #3987e5;
+      --good-ink:  #0ca30c;
+      --wash:      rgba(57,135,229,0.11);
+      --wash-bad:  rgba(208,59,59,0.10);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1: #1a1a19;
+    --plane:     #0d0d0d;
+    --ink:       #ffffff;
+    --ink-2:     #c3c2b7;
+    --muted:     #898781;
+    --grid:      #2c2c2a;
+    --baseline:  #383835;
+    --ring:      rgba(255,255,255,0.10);
+    --with:      #3987e5;
+    --good-ink:  #0ca30c;
+    --wash:      rgba(57,135,229,0.11);
+    --wash-bad:  rgba(208,59,59,0.10);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--plane);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 24px 96px; }
+
+  /* ---------- header ---------- */
+  .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  .eyebrow {
+    font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--muted); margin: 0 0 12px;
+  }
+  h1 { font-size: clamp(28px, 4.6vw, 44px); line-height: 1.12; letter-spacing: -.02em; margin: 0 0 16px; font-weight: 650; }
+  .lede { font-size: 17px; color: var(--ink-2); max-width: 68ch; margin: 0 0 8px; }
+  .provenance { font-size: 13px; color: var(--muted); margin: 20px 0 0; }
+  .themebtn {
+    flex: none; background: var(--surface-1); color: var(--ink-2); border: 1px solid var(--ring);
+    border-radius: 8px; padding: 7px 12px; font: inherit; font-size: 13px; cursor: pointer;
+  }
+  .themebtn:hover { color: var(--ink); }
+
+  h2 { font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
+  .h2sub { font-size: 20px; font-weight: 600; letter-spacing: -.01em; margin: 0 0 20px; color: var(--ink); }
+  section { margin-top: 64px; }
+  hr.rule { border: 0; border-top: 1px solid var(--grid); margin: 0; }
+
+  /* ---------- KPI row ---------- */
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .tile {
+    background: var(--surface-1); border: 1px solid var(--ring); border-radius: 12px; padding: 16px 18px 18px;
+  }
+  .tile .label { font-size: 12.5px; color: var(--ink-2); margin-bottom: 10px; min-height: 2.6em; }
+  .tile .pair { display: flex; align-items: baseline; gap: 9px; }
+  .tile .v-without { font-size: 22px; font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .tile .arrow { color: var(--baseline); font-size: 15px; }
+  .tile .v-with { font-size: 34px; font-weight: 650; letter-spacing: -.02em; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .tile .delta { font-size: 12.5px; margin-top: 8px; color: var(--ink-2); }
+  .tile .delta strong { color: var(--good-ink); font-weight: 600; }
+  .tile .foot { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+
+  /* ---------- legend ---------- */
+  .legend { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; font-size: 13px; color: var(--ink-2); margin: 0 0 20px; }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .swatch { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+
+  /* ---------- tabs ---------- */
+  .tabs { display: flex; gap: 6px; margin-bottom: 22px; flex-wrap: wrap; }
+  .tab {
+    background: transparent; border: 1px solid var(--ring); color: var(--ink-2);
+    border-radius: 999px; padding: 7px 15px; font: inherit; font-size: 13.5px; cursor: pointer;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { background: var(--ink); color: var(--plane); border-color: var(--ink); font-weight: 550; }
+
+  .taskline { font-size: 14px; color: var(--ink-2); margin: 0 0 6px; }
+  .taskline b { color: var(--ink); font-weight: 600; }
+  .headline { font-size: 21px; font-weight: 600; letter-spacing: -.015em; margin: 0 0 26px; max-width: 60ch; line-height: 1.3; }
+
+  /* ---------- journeys ---------- */
+  .lanes { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  .lane { background: var(--surface-1); border: 1px solid var(--ring); border-radius: 14px; overflow: hidden; }
+  .lane-hd { padding: 15px 18px 14px; border-bottom: 1px solid var(--grid); }
+  .lane-title { display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 650; letter-spacing: -.01em; }
+  .lane-bar { height: 3px; border-radius: 2px; }
+  .lane--without .lane-bar { background: var(--without); }
+  .lane--with .lane-bar { background: var(--with); }
+  .lane-meta { font-size: 12.5px; color: var(--muted); margin-top: 5px; font-variant-numeric: tabular-nums; }
+  .verdict { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; margin-top: 10px; }
+  .verdict--ok { color: var(--good-ink); }
+  .verdict--fail { color: var(--critical); }
+  .icon { width: 14px; height: 14px; flex: none; }
+
+  .steps { list-style: none; margin: 0; padding: 6px 0 10px; --tcol: 66px; --tpad: 18px; --tgap: 12px; }
+  .step { display: grid; grid-template-columns: var(--tcol) 1fr; gap: var(--tgap); padding: 9px var(--tpad); position: relative; }
+  .step .t { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; padding-top: 2px; white-space: nowrap; }
+  .step .body { border-left: 2px solid var(--grid); padding-left: 15px; padding-bottom: 2px; }
+  .step .lbl { display: block; font-size: 13.5px; font-weight: 600; letter-spacing: -.005em; }
+  .step .det { display: block; font-size: 13px; color: var(--ink-2); margin-top: 2px; }
+  .step .dot {
+    position: absolute;
+    left: calc(var(--tpad) + var(--tcol) + var(--tgap) - 3.5px);
+    top: 11px; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--baseline); box-shadow: 0 0 0 2px var(--surface-1);
+  }
+  .lane--with .step .dot { background: var(--with); }
+
+  /* step kinds */
+  .step--wall { background: var(--wash-bad); }
+  .step--wall .dot { background: var(--warning); }
+  .step--wall .lbl { color: var(--ink); }
+  .step--wall .body { border-left-color: var(--warning); }
+  .step--wall .flag { font-size: 11px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 2px; }
+
+  .step--win { background: var(--wash); }
+  .step--win .dot { background: var(--with); }
+  .step--win .body { border-left-color: var(--with); }
+
+  .step--dead .det, .step--dead .lbl { color: var(--ink-2); }
+  .step--dead .body { border-left-style: dashed; }
+  .step--dead .dot { background: var(--muted); }
+
+  .step--wait .body { border-left-style: dotted; border-left-color: var(--baseline); }
+  .step--wait .lbl { color: var(--ink-2); font-weight: 550; }
+  .step--wait .dot { background: transparent; border: 2px solid var(--baseline); box-shadow: none; width: 7px; height: 7px; }
+
+  .step--end-ok, .step--end-fail { padding-top: 13px; padding-bottom: 15px; }
+  .step--end-ok .body { border-left-color: var(--good); }
+  .step--end-ok .dot { background: var(--good); }
+  .step--end-ok .lbl { color: var(--good-ink); }
+  .step--end-fail .body { border-left-color: var(--critical); }
+  .step--end-fail .dot { background: var(--critical); }
+  .step--end-fail .lbl { color: var(--critical); }
+
+  .diverge {
+    display: flex; align-items: center; gap: 10px; margin: 26px 0 22px;
+    font-size: 12px; font-weight: 650; letter-spacing: .07em; text-transform: uppercase; color: var(--muted);
+  }
+  .diverge::before, .diverge::after { content: ""; height: 1px; background: var(--grid); flex: 1; }
+
+  /* ---------- advice ---------- */
+  .advice { background: var(--surface-1); border: 1px solid var(--ring); border-radius: 14px; padding: 4px 0; }
+  .arow { display: grid; grid-template-columns: 92px 1fr; gap: 14px; padding: 13px 20px; border-bottom: 1px solid var(--grid); }
+  .arow:last-child { border-bottom: 0; }
+  .arow--decisive { background: var(--wash); }
+  .atag { font-size: 11px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); padding-top: 2px; }
+  .arow--decisive .atag { color: var(--with); }
+  .atext { font-size: 13.5px; color: var(--ink-2); }
+  .arow--decisive .atext { color: var(--ink); }
+  .atext code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; background: var(--plane); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--ring); overflow-wrap: anywhere; }
+  .adecisive-note { font-size: 12px; font-weight: 600; color: var(--with); display: block; margin-bottom: 3px; letter-spacing: .04em; text-transform: uppercase; }
+
+  /* ---------- bars ---------- */
+  .chart { background: var(--surface-1); border: 1px solid var(--ring); border-radius: 14px; padding: 24px 26px 20px; }
+  .barrow { display: grid; grid-template-columns: 116px 1fr; gap: 16px; align-items: center; margin-bottom: 14px; }
+  .barrow:last-of-type { margin-bottom: 6px; }
+  .barlabel { font-size: 13.5px; color: var(--ink-2); text-align: right; }
+  .bartrack { position: relative; height: 26px; }
+  .bar { height: 26px; border-radius: 0 5px 5px 0; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; }
+  .bar span { font-size: 13px; font-weight: 650; color: #fff; font-variant-numeric: tabular-nums; }
+  .bar--without { background: var(--without); }
+  .bar--with { background: var(--with); }
+  .axis { border-top: 1px solid var(--baseline); margin-left: 132px; display: flex; justify-content: space-between; padding-top: 6px; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  caption { text-align: left; font-size: 13px; color: var(--muted); padding-bottom: 12px; }
+  th, td { text-align: right; padding: 10px 12px; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; font-variant-numeric: normal; }
+  thead th { font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.good { color: var(--good-ink); font-weight: 600; }
+  td.zero { color: var(--good-ink); font-weight: 650; }
+
+  details.method { margin-top: 20px; }
+  details.method summary { cursor: pointer; font-size: 13.5px; color: var(--ink-2); font-weight: 550; }
+  details.method summary:hover { color: var(--ink); }
+  .method-body { font-size: 13.5px; color: var(--ink-2); max-width: 74ch; }
+  .method-body ul { padding-left: 20px; }
+  .method-body li { margin-bottom: 7px; }
+  .method-body b { color: var(--ink); font-weight: 600; }
+  footer { margin-top: 72px; padding-top: 22px; border-top: 1px solid var(--grid); font-size: 12.5px; color: var(--muted); }
+
+  @media (max-width: 860px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .lanes { grid-template-columns: 1fr; }
+    .wrap { padding: 28px 16px 72px; }
+  }
+  @media (max-width: 520px) {
+    .kpis { grid-template-columns: 1fr; }
+    .tile .label { min-height: 0; }
+    .arow, .step { grid-template-columns: 1fr; gap: 4px; }
+    .step .t { text-align: left; }
+    .step .dot { display: none; }
+    .step .body { border-left: 2px solid var(--grid); }
+    .barrow { grid-template-columns: 1fr; gap: 4px; }
+    .barlabel { text-align: left; }
+    .axis { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div>
+      <p class="eyebrow">Agentic checkout · A/B evaluation</p>
+      <h1>An agent's payment journey,<br>with and without advice</h1>
+    </div>
+    <button class="themebtn" id="themebtn" type="button">Dark</button>
+  </div>
+
+  <p class="lede">
+    An AI agent was given a shopping task and a wallet, and told to buy one specific item.
+    Then the same task was run again — identical model, identical browser, identical budget — with
+    one extra paragraph in the prompt: <b>a short playbook for that merchant's checkout</b>,
+    written from what earlier agents had already learned there.
+  </p>
+  <p class="lede">Everything below is from those real runs.</p>
+  <p class="provenance" id="provenance"></p>
+
+  <!-- ================= HEADLINE NUMBERS ================= -->
+  <section>
+    <h2>The headline</h2>
+    <p class="h2sub">What one paragraph of merchant advice changed</p>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--without)"></i> Without advice</span>
+      <span><i class="swatch" style="background:var(--with)"></i> With advice</span>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <!-- ================= THE JOURNEYS ================= -->
+  <section>
+    <h2>Side by side</h2>
+    <p class="h2sub">One purchase, two journeys</p>
+    <div class="tabs" id="tabs" role="tablist"></div>
+    <p class="taskline" id="taskline"></p>
+    <p class="headline" id="jheadline"></p>
+    <div class="lanes" id="lanes"></div>
+  </section>
+
+  <!-- ================= THE ADVICE ================= -->
+  <section>
+    <h2>The input</h2>
+    <p class="h2sub" id="advice-title">The advice, as the agent received it</p>
+    <div class="advice" id="advice"></div>
+  </section>
+
+  <!-- ================= AGGREGATE ================= -->
+  <section>
+    <h2>All runs</h2>
+    <p class="h2sub">It isn't just these three</p>
+    <div class="chart">
+      <div id="bars"></div>
+      <div class="axis"><span>0%</span><span>50%</span><span>100%</span></div>
+    </div>
+
+    <div class="chart" style="margin-top:16px">
+      <table id="fctable"></table>
+    </div>
+
+    <details class="method">
+      <summary>Method, and what these numbers do and don't show</summary>
+      <div class="method-body">
+        <ul>
+          <li><b>What a run is.</b> One agent, one real browser, one real merchant site, one real card, told to buy one specific item under a spending cap. A run counts as a success only on a merchant order confirmation — not on the agent's own say-so.</li>
+          <li><b>What "advice" is.</b> A short, merchant-specific playbook appended to the prompt: the checkout's URL sequence, its known traps, how its confirmation page looks, and when to ask the human. It is assembled from what previous agents observed on that site. Nothing about the model, tools, or permissions changes between arms.</li>
+          <li><b>The paired numbers are the honest ones.</b> The two arms aren't perfectly balanced (46 unadvised vs 34 advised runs across several rounds), so the headline rates can drift on merchant mix. Restricting to the <b>28 cases where the same task ran both ways</b> gives 20/28 → 24/28. Advice fixed 5 runs and broke 1.</li>
+          <li><b>Human approval time is excluded from working time.</b> Every purchase pauses for a human to approve the wallet spend request. That wait ranged from 11 seconds to 10 minutes and is not the agent's doing, so the time figures count only the agent's own active work.</li>
+          <li><b>Caveats.</b> Small n. Live commercial sites that change under you. Two model versions across rounds. Merchants were chosen because agents already struggled there, so the unadvised baseline is not a general "agents can't check out" rate. Two of the three journeys shown were unadvised failures, which is the interesting case, not the typical one.</li>
+        </ul>
+      </div>
+    </details>
+  </section>
+
+  <footer id="footer"></footer>
+</div>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var ICON_OK   = '<svg class="icon" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var ICON_FAIL = '<svg class="icon" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+  // Wrap URL-ish and selector-ish tokens in <code> for legibility. Runs on escaped text.
+  // Wrap URL-ish / selector-ish tokens in <code>. Operates on already-escaped text,
+  // so entity sequences (&amp; &lt; &gt;) must be matched as units — a bare [^\s,;]+
+  // would split a query string at the ';' inside '&amp;'.
+  // Entity alternative MUST come first: regex alternation is ordered, and a leading
+  // [^\s,;] would consume the '&' of '&amp;' and then stall on its ';'.
+  var ENT = "(?:&(?:amp|lt|gt);|[^\\s,;])";
+  var CODE_RE = new RegExp(
+    "(pay\\.ebay\\.com\\/" + ENT + "+" +
+    "|signin\\.ebay\\.com" +
+    "|\\/checkout\\/" + ENT + "*[a-z]" +
+    "|\\/[a-z][a-z0-9._-]*\\.html" +
+    "|\\/products\\/" + ENT + "*\\/" +
+    "|#binBtn_btn_1|gchru)", "g");
+  function codeify(s) { return s.replace(CODE_RE, "<code>$1</code>"); }
+
+  function clock(sec) {
+    if (sec < 60) return sec + "s";
+    var m = Math.floor(sec / 60), s = sec % 60;
+    return m + "m " + (s < 10 ? "0" : "") + s + "s";
+  }
+  // Compact min:sec, for stat tiles where a wrap would break the row.
+  function mmss(sec) {
+    var m = Math.floor(sec / 60), s = sec % 60;
+    return m + ":" + (s < 10 ? "0" : "") + s;
+  }
+
+  /* ---------------- provenance + footer ---------------- */
+  var a = STATS.arms;
+  document.getElementById("provenance").innerHTML =
+    STATS.runs + " agent checkout runs · " + STATS.merchants + " merchants · " + esc(STATS.dateRange) +
+    " · " + a.without.n + " without advice, " + a["with"].n + " with";
+  document.getElementById("footer").innerHTML =
+    "Real runs against live merchant sites. Buyer details, order numbers, spend-request IDs and card digits are redacted. " +
+    "Merchant playbook text and the agents' own milestone notes are reproduced from the runs themselves, with one substitution " +
+    "throughout: the wallet product's internal name is replaced with &ldquo;wallet&rdquo;.";
+
+  /* ---------------- KPI tiles ---------------- */
+  var p = STATS.paired;
+  var tiles = [
+    {
+      label: "Purchases completed, same task run both ways",
+      without: p.withoutOk + "/" + p.n,
+      with: p.withOk + "/" + p.n,
+      delta: "+4 purchases",
+      foot: "advice fixed 5 runs, broke 1"
+    },
+    {
+      label: "Runs where the agent gave up or ran out of time",
+      without: a.without.abandoned,
+      with: a["with"].abandoned,
+      delta: "down to zero",
+      foot: "of " + a.without.n + " and " + a["with"].n + " runs"
+    },
+    {
+      label: "Median agent working time per run (min:sec)",
+      without: mmss(a.without.medActiveS),
+      with: mmss(a["with"].medActiveS),
+      delta: "66s faster",
+      foot: "excludes waiting on human approval"
+    },
+    {
+      label: "Got it right on the first attempt",
+      without: a.without.firstAttemptPct.toFixed(1) + "%",
+      with: a["with"].firstAttemptPct.toFixed(1) + "%",
+      delta: "+13.5 points",
+      foot: "no retry, no second submit"
+    }
+  ];
+  document.getElementById("kpis").innerHTML = tiles.map(function (t) {
+    return '<div class="tile">' +
+      '<div class="label">' + esc(t.label) + "</div>" +
+      '<div class="pair">' +
+        '<span class="v-without">' + esc(t.without) + "</span>" +
+        '<span class="arrow" aria-label="becomes">&rarr;</span>' +
+        '<span class="v-with">' + esc(t["with"]) + "</span>" +
+      "</div>" +
+      '<div class="delta"><strong>' + esc(t.delta) + "</strong></div>" +
+      '<div class="foot">' + esc(t.foot) + "</div>" +
+    "</div>";
+  }).join("");
+
+  /* ---------------- journeys ---------------- */
+  var current = 0;
+
+  function renderStep(s, lastT) {
+    var cls = "step step--" + s.kind;
+    var time = "+" + clock(s.t);
+    if (s.kind === "wait" && s.waitUntil) time = "+" + clock(s.t);
+    var flag = "";
+    if (s.kind === "wall") flag = '<span class="flag">Same obstacle</span>';
+    var det = codeify(esc(s.detail));
+    return '<li class="' + cls + '">' +
+      '<span class="dot" aria-hidden="true"></span>' +
+      '<span class="t">' + time + "</span>" +
+      '<span class="body">' + flag +
+        '<span class="lbl">' + esc(s.label) + "</span>" +
+        '<span class="det">' + det + "</span>" +
+      "</span>" +
+    "</li>";
+  }
+
+  function renderLane(arm, side) {
+    var ok = arm.outcome === "success";
+    var title = side === "with" ? "With advice" : "Without advice";
+    return '<div class="lane lane--' + side + '">' +
+      '<div class="lane-hd">' +
+        '<div class="lane-bar"></div>' +
+        '<div class="lane-title" style="margin-top:10px">' + title + "</div>" +
+        '<div class="lane-meta">' + arm.toolCalls + " browser actions · " + clock(arm.activeS) + " of agent working time</div>" +
+        '<div class="verdict verdict--' + (ok ? "ok" : "fail") + '">' + (ok ? ICON_OK : ICON_FAIL) +
+          esc(arm.verdict) + "</div>" +
+      "</div>" +
+      '<ul class="steps">' + arm.steps.map(function (s) { return renderStep(s); }).join("") + "</ul>" +
+    "</div>";
+  }
+
+  function renderJourney(i) {
+    var j = JOURNEYS[i];
+    document.getElementById("taskline").innerHTML =
+      "<b>" + esc(j.merchant) + "</b> — buy one " + esc(j.item) + ", " + esc(j.price) +
+      ", staying under " + esc(j.cap) + ".";
+    document.getElementById("jheadline").textContent = j.headline;
+    document.getElementById("lanes").innerHTML =
+      renderLane(j.without, "without") + renderLane(j["with"], "with");
+
+    document.getElementById("advice-title").textContent =
+      "The " + j.merchant + " advice, as the agent received it";
+    document.getElementById("advice").innerHTML = j.advice.map(function (r) {
+      return '<div class="arow' + (r.decisive ? " arow--decisive" : "") + '">' +
+        '<div class="atag">' + esc(r.tag) + "</div>" +
+        '<div class="atext">' +
+          (r.decisive ? '<span class="adecisive-note">The line that made the difference</span>' : "") +
+          codeify(esc(r.text)) +
+        "</div>" +
+      "</div>";
+    }).join("") +
+    '<div class="arow"><div class="atag">Confidence</div><div class="atext">' +
+      esc(j.confidence) + " — how much prior evidence this merchant's playbook rests on." +
+    "</div></div>";
+
+    Array.prototype.forEach.call(document.querySelectorAll("#tabs .tab"), function (b, k) {
+      b.setAttribute("aria-selected", k === i ? "true" : "false");
+    });
+    current = i;
+  }
+
+  document.getElementById("tabs").innerHTML = JOURNEYS.map(function (j, i) {
+    return '<button class="tab" type="button" role="tab" aria-selected="false" data-i="' + i + '">' +
+      esc(j.merchant) + "</button>";
+  }).join("");
+  document.getElementById("tabs").addEventListener("click", function (e) {
+    var b = e.target.closest(".tab");
+    if (b) renderJourney(+b.dataset.i);
+  });
+
+  /* ---------------- bars ---------------- */
+  var bars = [
+    { label: "Without advice", pct: a.without.successPct, n: a.without.success + " of " + a.without.n, side: "without" },
+    { label: "With advice",    pct: a["with"].successPct,  n: a["with"].success + " of " + a["with"].n,  side: "with" },
+    { label: "Without advice", pct: p.withoutPct, n: p.withoutOk + " of " + p.n, side: "without", grp: "Same task, both ways" },
+    { label: "With advice",    pct: p.withPct,    n: p.withOk + " of " + p.n,    side: "with" }
+  ];
+  document.getElementById("bars").innerHTML =
+    '<p style="margin:0 0 16px;font-size:13.5px;color:var(--ink-2)">Purchases completed, all runs</p>' +
+    bars.slice(0, 2).map(barHTML).join("") +
+    '<p style="margin:22px 0 16px;font-size:13.5px;color:var(--ink-2)">Purchases completed, restricted to the ' +
+      p.n + ' tasks run both ways</p>' +
+    bars.slice(2).map(barHTML).join("");
+
+  function barHTML(b) {
+    return '<div class="barrow">' +
+      '<div class="barlabel">' + esc(b.label) + "</div>" +
+      '<div class="bartrack"><div class="bar bar--' + b.side + '" style="width:' + b.pct + '%">' +
+        "<span>" + b.pct + "%</span></div></div>" +
+    "</div>" +
+    '<div style="margin:-8px 0 14px 132px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums">' +
+      esc(b.n) + " runs</div>";
+  }
+
+  /* ---------------- failure-class table ---------------- */
+  var fc = STATS.failureClasses;
+  document.getElementById("fctable").innerHTML =
+    "<caption>How every run ended. Shown as runs, then share of that arm — the arms have " +
+      "different totals, so the counts alone would mislead. The advised arm never once gave up.</caption>" +
+    "<thead><tr><th>Outcome</th><th>Without advice</th><th>With advice</th></tr></thead><tbody>" +
+    fc.map(function (r) {
+      var zero = r["with"] === 0 && r.without > 0;
+      function cell(v, n) {
+        return v + ' <span style="color:var(--muted);font-weight:400">(' + Math.round(100 * v / n) + "%)</span>";
+      }
+      return "<tr><td>" + esc(r.label) + "</td>" +
+        "<td" + (r.good ? ' class="good"' : "") + ">" + cell(r.without, a.without.n) + "</td>" +
+        "<td" + (r.good ? ' class="good"' : zero ? ' class="zero"' : "") + ">" + cell(r["with"], a["with"].n) + "</td></tr>";
+    }).join("") +
+    "<tr><td><b>Total runs</b></td><td><b>" + a.without.n + "</b></td><td><b>" + a["with"].n + "</b></td></tr>" +
+    "</tbody>";
+
+  /* ---------------- theme toggle ---------------- */
+  var btn = document.getElementById("themebtn");
+  function dark() {
+    var s = document.documentElement.getAttribute("data-theme");
+    if (s) return s === "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+  function sync() { btn.textContent = dark() ? "Light" : "Dark"; }
+  btn.addEventListener("click", function () {
+    document.documentElement.setAttribute("data-theme", dark() ? "light" : "dark");
+    sync();
+  });
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", sync);
+  sync();
+
+  renderJourney(0);
+})();
+</script>
+</body>
+</html>
