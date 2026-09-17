@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>og:image source for directory.html — 1200×630</title>
+<!--
+  Source for og-directory.png. Render at exactly 1200x630 and screenshot #card, same as og.html.
+  The ladder below is a condensed copy of the one in directory.html — a share image is a snapshot
+  by nature, so it does not track that file. Re-render if the rungs or the counts change.
+-->
+<style>
+  :root {
+    --surface-1: #fcfcfb; --plane: #f9f9f7; --ink: #0b0b0b; --ink-2: #52514e;
+    --muted: #898781; --grid: #e1e0d9; --baseline: #c3c2b7; --ring: rgba(11,11,11,0.10);
+    --with: #2a78d6; --wash: rgba(42,120,214,0.07);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--plane); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  /* Two columns: the claim on the left, the ladder on the right — the ladder is the whole point,
+     so it gets the wider half and the headline sits at 46px rather than 57px to make room. */
+  #card {
+    width: 1200px; height: 630px; padding: 58px 68px 50px; display: flex; flex-direction: column;
+    background: var(--plane); color: var(--ink);
+  }
+  .eyebrow { font-size: 16px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 20px; }
+  .body { flex: 1; display: grid; grid-template-columns: 1fr 520px; gap: 56px; align-items: center; }
+  h1 { font-size: 47px; line-height: 1.08; letter-spacing: -.026em; font-weight: 650; margin: 0 0 22px; }
+  .claim { font-size: 21px; line-height: 1.4; color: var(--ink-2); margin: 0 0 26px; }
+  .claim b { color: var(--ink); font-weight: 600; }
+  .stat .k { font-size: 14px; color: var(--muted); margin-bottom: 5px; }
+  .stat .v { font-size: 34px; font-weight: 650; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .src { font-size: 15px; color: var(--muted); margin: 20px 0 0; display: flex; gap: 10px; }
+  .src .u { color: var(--ink-2); }
+
+  /* the ladder */
+  .ladder { position: relative; list-style: none; margin: 0; padding: 0; }
+  .ladder::before { content: ""; position: absolute; left: 7px; top: 26px; bottom: 28px; width: 1px; background: var(--grid); }
+  .rung {
+    position: relative; display: grid; grid-template-columns: 30px 1fr auto; gap: 16px;
+    align-items: center; padding: 13px 0; border-bottom: 1px solid var(--grid);
+  }
+  .rung:last-child { border-bottom: 0; }
+  .node { width: 15px; height: 15px; border-radius: 50%; background: var(--plane); border: 2px solid var(--baseline); }
+  .live .node { border-color: var(--with); background: var(--with); }
+  /* Not a slot — a smaller, fainter terminal point. A dashed border on a small circle looks broken. */
+  .none .node { width: 10px; height: 10px; margin-left: 2px; border-color: var(--grid); }
+  .slot { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 19px; font-weight: 600; }
+  .live .slot { color: var(--with); }
+  .none .slot { color: var(--muted); }
+  .chip { font-size: 14px; font-weight: 600; border-radius: 999px; padding: 3px 13px; white-space: nowrap; }
+  .c-live { background: var(--with); color: var(--surface-1); }
+  .c-res { color: var(--muted); border: 1px dashed var(--baseline); }
+  .c-none { color: var(--muted); border: 1px solid var(--grid); }
+</style>
+</head>
+<body>
+<div id="card">
+  <p class="eyebrow">Agentic checkout · the directory</p>
+
+  <div class="body">
+    <div>
+      <h1>One lookup.<br>The answer is a route.</h1>
+      <p class="claim">An agent hands over a merchant URL and gets back
+        <b>every way to reach a paid order</b> there.</p>
+      <div class="stat">
+        <div class="k">Slots populated today</div>
+        <div class="v">1 of 4</div>
+      </div>
+    </div>
+
+    <ol class="ladder">
+      <li class="rung"><span class="node"></span><span class="slot">mcp</span><span class="chip c-res">reserved</span></li>
+      <li class="rung"><span class="node"></span><span class="slot">machine_payments</span><span class="chip c-res">reserved</span></li>
+      <li class="rung"><span class="node"></span><span class="slot">provisioning</span><span class="chip c-res">reserved</span></li>
+      <li class="rung live"><span class="node"></span><span class="slot">browser_checkout</span><span class="chip c-live">772 domains</span></li>
+      <li class="rung none"><span class="node"></span><span class="slot">{ }</span><span class="chip c-none">ask the person</span></li>
+    </ol>
+  </div>
+
+  <p class="src">
+    <span class="u">tgalaxystripe.github.io/agent-payment-journey/directory.html</span>
+    <span>Read from the live advice store · Sep 2026</span>
+  </p>
+</div>
+</body>
+</html>

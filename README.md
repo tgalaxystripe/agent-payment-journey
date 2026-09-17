@@ -1,9 +1,15 @@
 # An agent's payment journey, with and without advice
 
-A single-page demo comparing what an AI shopping agent does at checkout **with** and
-**without** a short merchant-specific playbook in its prompt.
+Two pages, linked by a nav in the header.
 
+**The journey** — what an AI shopping agent does at checkout **with** and **without** a short
+merchant-specific playbook in its prompt.
 Live: <https://tgalaxystripe.github.io/agent-payment-journey/>
+
+**The directory** — where that playbook comes from: one lookup on a merchant URL, four capability
+slots in the answer, and what each one is for. The journey page is the evidence behind the single
+slot that is populated today.
+Live: <https://tgalaxystripe.github.io/agent-payment-journey/directory.html>
 
 ## What it shows
 
@@ -22,11 +28,13 @@ the "All runs" section, along with the method and its caveats.
 
 ## Files
 
-- `index.html` — the whole page: markup, styles, and rendering. No dependencies, no build.
+- `index.html` — the journey page: markup, styles, and rendering. No dependencies, no build.
 - `data.js` — the journey steps and aggregate numbers, extracted from the run records.
-- `og.html` → `og.png` — source and output for the social share card. Re-render by opening
-  `og.html` at a 1200×630 viewport and screenshotting `#card`; `og.png` is committed because
-  Twitter and Slack fetch it by absolute URL.
+- `directory.html` — the directory page. Also standalone; its token block is a copy of
+  `index.html`'s rather than a shared file, so the two need keeping in sync by hand.
+- `og.html` → `og.png`, `og-directory.html` → `og-directory.png` — sources and outputs for the two
+  social share cards. Re-render by opening the source at a 1200×630 viewport and screenshotting
+  `#card`; the PNGs are committed because Twitter and Slack fetch them by absolute URL.
 
 ## Running locally
 
@@ -51,3 +59,10 @@ Nothing else in the quoted advice or the agents' milestone notes is reworded.
 The three diagrams in "How advice works" are drawings, not screenshots — no capture of a live
 merchant page is published, and every number in them comes from the run timestamps. The figure
 comments in `index.html` record which timestamp each mark is placed from.
+
+On the directory page: the four slot names are the real keys in the response contract, but the
+request path and internal product acronyms are left out, and no merchant is named in the coverage
+numbers. Counts were read from the live advice store on 2026-09-17 — `store.py --coverage` and
+`--health` for coverage and origins, the 537 per-merchant records for confidence and stability.
+Note that `inspect_api/README.txt` in the harness is stale on both (it still says 475/614 and
+"none are high"); the live store is the source used here.

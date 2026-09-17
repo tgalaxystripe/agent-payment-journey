@@ -89,6 +89,8 @@
 
   /* ---------- header ---------- */
   .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  .topbar-right { display: flex; align-items: center; gap: 8px; flex: none; }
+  .topbar-right nav { display: flex; gap: 6px; }
   .eyebrow {
     font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
     color: var(--muted); margin: 0 0 12px;
@@ -97,11 +99,13 @@
   .lede { font-size: 17px; color: var(--ink-2); max-width: 66ch; margin: 0 0 10px; }
   .lede b { color: var(--ink); font-weight: 600; }
   .provenance { font-size: 13px; color: var(--muted); margin: 20px 0 0; }
-  .themebtn {
+  .themebtn, .navlink {
     flex: none; background: transparent; color: var(--muted); border: 1px solid var(--ring);
     border-radius: 999px; padding: 6px 13px; font: inherit; font-size: 12.5px; cursor: pointer;
+    text-decoration: none; white-space: nowrap;
   }
-  .themebtn:hover { color: var(--ink); border-color: var(--baseline); }
+  .themebtn:hover, .navlink:hover { color: var(--ink); border-color: var(--baseline); }
+  .navlink[aria-current="page"] { background: var(--ink); color: var(--plane); border-color: var(--ink); font-weight: 550; }
 
   h2 { font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
   .h2sub { font-size: 20px; font-weight: 600; letter-spacing: -.01em; margin: 0 0 6px; color: var(--ink); }
@@ -344,6 +348,10 @@
     .wrap { padding: 28px 16px 72px; }
     .chart { padding: 20px 18px 16px; --labcol: 118px; }
   }
+  @media (max-width: 620px) {
+    /* Nav + theme button no longer fit beside the title, so they move above it. */
+    .topbar { flex-direction: column-reverse; align-items: flex-start; gap: 20px; }
+  }
   @media (max-width: 520px) {
     .kpis { grid-template-columns: 1fr; }
     .arow, .step { grid-template-columns: 1fr; gap: 4px; }
@@ -364,7 +372,13 @@
       <p class="eyebrow">Agentic checkout · A/B evaluation</p>
       <h1>An agent’s payment journey,<br>with and without advice</h1>
     </div>
-    <button class="themebtn" id="themebtn" type="button">Dark</button>
+    <div class="topbar-right">
+      <nav aria-label="Pages">
+        <a class="navlink" href="./" aria-current="page">The journey</a>
+        <a class="navlink" href="./directory.html">The directory</a>
+      </nav>
+      <button class="themebtn" id="themebtn" type="button">Dark</button>
+    </div>
   </div>
 
   <p class="lede">
