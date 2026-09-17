@@ -44,7 +44,7 @@
       --surface-1: #1a1a19; --plane: #0d0d0d; --ink: #ffffff; --ink-2: #c3c2b7;
       --muted: #898781; --grid: #2c2c2a; --baseline: #383835; --ring: rgba(255,255,255,0.10);
       --with: #3987e5; --good-ink: #0ca30c;
-      --wash: rgba(57,135,229,0.11); --wash-bad: rgba(208,59,59,0.10); --with-soft: rgba(57,135,229,0.34);
+      --wash: rgba(57,135,229,0.11); --wash-bad: rgba(208,59,59,0.10); --with-soft: rgba(57,135,229,0.55);
     }
   }
   :root[data-theme="dark"] {
@@ -52,7 +52,7 @@
     --surface-1: #1a1a19; --plane: #0d0d0d; --ink: #ffffff; --ink-2: #c3c2b7;
     --muted: #898781; --grid: #2c2c2a; --baseline: #383835; --ring: rgba(255,255,255,0.10);
     --with: #3987e5; --good-ink: #0ca30c;
-    --wash: rgba(57,135,229,0.11); --wash-bad: rgba(208,59,59,0.10); --with-soft: rgba(57,135,229,0.34);
+    --wash: rgba(57,135,229,0.11); --wash-bad: rgba(208,59,59,0.10); --with-soft: rgba(57,135,229,0.55);
   }
 
   * { box-sizing: border-box; }
@@ -102,26 +102,37 @@
     font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
     color: var(--muted); margin: 0 0 12px;
   }
-  .call { font-size: 13px; line-height: 1.75; color: var(--ink-2); }
+  .call {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12.5px; line-height: 1.85; color: var(--ink-2); margin: 0;
+  }
   .call .k { color: var(--ink); font-weight: 600; }
   .call .s { color: var(--with); }
   .call .c { color: var(--muted); }
 
-  /* All of these are the same merchant, so they get the same answer and the same id. */
+  /* Three spellings, one brace, one key. */
+  .conv { display: grid; grid-template-columns: 1fr 26px auto; gap: 0 10px; align-items: center; }
   .norm { list-style: none; margin: 0; padding: 0; font-size: 12.5px; }
-  .norm li { display: flex; align-items: baseline; gap: 8px; padding: 2px 0; color: var(--muted); }
-  .norm .u { color: var(--ink-2); overflow-wrap: anywhere; }
-  .norm-out { margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--grid); font-size: 12.5px; color: var(--muted); }
+  .norm li { padding: 2px 0; color: var(--ink-2); overflow-wrap: anywhere; }
+  .brace { width: 26px; height: 74px; }
+  .conv-out { margin: 0; display: flex; flex-direction: column; gap: 3px; }
+  .conv-out .mono { font-size: 14px; font-weight: 600; color: var(--with); }
+  .conv-out .lbl { font-size: 11.5px; color: var(--muted); }
+  .norm-out { margin: 16px 0 0; padding-top: 13px; border-top: 1px solid var(--grid); font-size: 12.5px; color: var(--muted); }
   .norm-out b { color: var(--with); font-weight: 600; }
 
   /* ---------- the ladder ---------- */
   /* One spine down the left with a node per rung, so the rungs read as ordered alternatives
      rather than as four unrelated cards. */
   .ladder { position: relative; list-style: none; margin: 0; padding: 0; }
-  .ladder::before {
-    content: ""; position: absolute; left: 6px; top: 22px; bottom: 26px; width: 1px;
+  /* The spine is per-rung, not one line down the list, so it can stop at the last node instead of
+     dangling past it. Nodes sit above it (z-index) and mask it with their own --plane fill. */
+  .rung::after {
+    content: ""; position: absolute; z-index: 0; left: 6px; top: 0; bottom: 0; width: 1px;
     background: var(--baseline);
   }
+  .rung:first-child::after { top: 22px; }
+  .rung:last-child::after { bottom: auto; height: 28px; }
   /* Two rows: everything sits on row 1 except .who, which tucks under .what. Rows are declared
      explicitly — with only grid-column set, auto-placement pushes the chip onto row 2 behind .who. */
   .rung {
@@ -130,6 +141,13 @@
     border-bottom: 1px solid var(--grid);
   }
   .rung:last-child { border-bottom: 0; }
+  /* The page's whole point is that one of these five is real, so the live rung gets a wash panel.
+     It starts after the node column and bleeds into the right gutter, so the spine stays clear. */
+  .rung > * { position: relative; z-index: 1; }
+  .rung--live::before {
+    content: ""; position: absolute; z-index: 0; left: 38px; right: -16px; top: 5px; bottom: 6px;
+    background: var(--wash); border-radius: 10px;
+  }
   .node {
     grid-area: 1 / 1; margin-top: 5px; justify-self: start; width: 13px; height: 13px;
     border-radius: 50%; background: var(--plane); border: 2px solid var(--baseline);
@@ -137,15 +155,17 @@
   .rung--live .node { border-color: var(--with); background: var(--with); }
   /* The last rung is not a slot, so its node is a smaller, fainter terminal point rather than a
      ring. (A dashed 2px border on a 13px circle renders as a broken squiggle — don't.) */
-  .rung--none .node { width: 9px; height: 9px; margin-top: 7px; border-color: var(--grid); }
+  /* margin-left keeps the smaller dot centred on the spine, which is set for the 13px node. */
+  .rung--none .node { width: 9px; height: 9px; margin: 7px 0 0 2px; border-color: var(--grid); }
 
-  .slot { grid-area: 1 / 2 / span 2 / 3; font-size: 13px; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+  .slot { grid-area: 1 / 2 / span 2 / 3; font-size: 13px; font-weight: 600; color: var(--ink-2); overflow-wrap: anywhere; }
   .rung--live .slot { color: var(--with); }
   .rung--none .slot { color: var(--muted); font-weight: 500; }
   .slot .plain { display: block; font-family: system-ui, -apple-system, sans-serif; font-size: 12px; font-weight: 500; color: var(--muted); margin-top: 3px; }
 
-  .what { grid-area: 1 / 3; margin: 0; font-size: 14px; color: var(--ink); }
-  .rung--reserved .what, .rung--none .what { color: var(--ink-2); }
+  .what { grid-area: 1 / 3; margin: 0; font-size: 14px; color: var(--ink-2); }
+  /* Only the live rung's description carries full ink — the reserved ones are context, not news. */
+  .rung--live .what { color: var(--ink); }
   .who { grid-area: 2 / 3; margin: 7px 0 0; font-size: 12.5px; color: var(--muted); }
   .who b { color: var(--ink-2); font-weight: 600; }
   .who a { color: var(--with); white-space: nowrap; }
@@ -159,9 +179,11 @@
   .chip--reserved { color: var(--muted); border: 1px dashed var(--baseline); }
   .chip--none { color: var(--muted); border: 1px solid var(--grid); }
 
+  /* No left rule: at this indent it lines up with the spine and reads as the ladder's line
+     dangling past the last node. The indent to the slot column is enough to mark it as a footnote. */
   .ladder-note {
-    margin: 22px 0 0; font-size: 13.5px; color: var(--ink-2); max-width: 76ch;
-    padding-left: 52px; border-left: 2px solid var(--wash);
+    margin: 26px 0 0; font-size: 13.5px; color: var(--ink-2); max-width: 88ch;
+    padding-left: 52px;
   }
   .ladder-note b { color: var(--ink); font-weight: 600; }
 
@@ -175,14 +197,18 @@
     font-size: 10.5px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase;
     color: var(--with); margin-bottom: 9px;
   }
-  .moment .act { font-size: 14px; font-weight: 600; letter-spacing: -.01em; margin: 0 0 9px; }
-  .moment .quote {
-    margin: auto 0 0; font-size: 12px; color: var(--muted); font-style: italic;
-    padding-top: 11px; border-top: 1px solid var(--grid);
-  }
+  .moment .act { font-size: 15px; font-weight: 600; letter-spacing: -.01em; margin: 0 0 10px; }
+  /* The quote is the card's content now, not a footnote under a paraphrase of itself. */
+  .moment .quote { margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink-2); font-style: italic; }
 
   /* ---------- coverage ---------- */
-  .cov { display: grid; grid-template-columns: 1fr 300px; gap: 32px; align-items: start; }
+  .cov { display: grid; grid-template-columns: 1fr 320px; gap: 40px; align-items: start; }
+  /* Each half states its own denominator — they differ (614 manifest rows vs 455 walked domains). */
+  .covlab {
+    margin: 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--ink-2);
+  }
+  .covlab span { margin-left: 10px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--muted); }
   .bar { display: flex; height: 34px; border-radius: 6px; overflow: hidden; gap: 2px; }
   .bar span { display: block; }
   .bar .b-walk { background: var(--with); }
@@ -205,9 +231,11 @@
   .conf .n { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
   .conf .bad { color: var(--critical); }
 
+  /* A left rule rather than a filled panel: the honesty has to be unmissable, not the loudest
+     thing on the page. One red mark carries it. */
   .caveat {
-    margin-top: 26px; background: var(--wash-bad); border: 1px solid var(--ring);
-    border-radius: 12px; padding: 15px 18px; font-size: 13.5px; color: var(--ink-2); max-width: 80ch;
+    margin-top: 34px; padding-left: 18px; border-left: 2px solid var(--critical);
+    font-size: 13.5px; color: var(--ink-2); max-width: 74ch;
   }
   .caveat b { color: var(--ink); font-weight: 600; }
 
@@ -236,7 +264,7 @@
     .what { grid-area: 2 / 2; }
     .who  { grid-area: 3 / 2; }
     .chip { grid-area: 4 / 2; justify-self: start; margin-top: 11px; }
-    .ladder-note { padding-left: 14px; }
+    .ladder-note { padding-left: 38px; }
   }
   @media (max-width: 620px) {
     /* Nav + theme button no longer fit beside the title, so they move above it. */
@@ -265,17 +293,10 @@
   </div>
 
   <p class="lede">
-    An agent about to buy something knows one thing for certain: the merchant’s URL. The directory
-    turns that into an answer to a single question — <b>which routes to a paid order exist here?</b>
+    An agent about to buy something always knows one thing: the merchant’s URL. Hand that over, and
+    the directory answers <b>which routes to a paid order exist here</b>.
   </p>
-  <p class="lede">
-    The response has four capability slots. Today exactly one of them is populated.
-  </p>
-  <p class="provenance">
-    Numbers on this page are read from the live advice store in the payability harness on
-    2026-09-17. The three unpopulated slots are named in the response contract; nothing fills them
-    yet, so this page does not invent behaviour for them.
-  </p>
+  <p class="lede">Four capability slots in the answer. Today exactly one is populated.</p>
 
   <!-- ================= THE ONE QUESTION ================= -->
   <section>
@@ -296,13 +317,22 @@
       </div>
       <div class="card rev" style="--d:.1s">
         <h3>Keyed on the merchant, not the URL</h3>
-        <ul class="norm">
-          <li><span class="u mono">https://www.westelm.com/cart?x=1</span></li>
-          <li><span class="u mono">http://westelm.com/ref=abc</span></li>
-          <li><span class="u mono">WESTELM.COM:443/x#y</span></li>
-        </ul>
-        <p class="norm-out">All three normalise to <b>westelm.com</b> and get the same answer under
-          the same stable id, so the agent never has to guess a canonical spelling.</p>
+        <!-- The three spellings visibly converge on one key, so the point is read rather than told. -->
+        <div class="conv">
+          <ul class="norm">
+            <li class="mono">https://www.westelm.com/cart?x=1</li>
+            <li class="mono">http://westelm.com/ref=abc</li>
+            <li class="mono">WESTELM.COM:443/x#y</li>
+          </ul>
+          <svg class="brace" viewBox="0 0 26 74" aria-hidden="true" focusable="false">
+            <path d="M1 6h9c3 0 4 2 4 5v22c0 3 1 5 4 5h6c-3 0-4 2-4 5v22c0 3-1 5-4 5H1"
+                  transform="translate(0,-3)" fill="none" stroke="var(--baseline)"/>
+            <path d="M20 37h5" fill="none" stroke="var(--baseline)"/>
+          </svg>
+          <p class="conv-out"><span class="mono">westelm.com</span><span class="lbl">one key, one answer</span></p>
+        </div>
+        <p class="norm-out">The agent never has to guess a canonical spelling, and two agents asking
+          differently get the same reply.</p>
       </div>
     </div>
   </section>
@@ -311,100 +341,84 @@
   <section>
     <h2>The answer</h2>
     <p class="h2sub">Four routes to a paid order, most direct first</p>
-    <p class="h2note">The directory returns <b>every</b> route the merchant supports — it does not
-      pick one. The agent takes the highest rung it can actually use, and drops to the next when a
-      rung is empty.</p>
+    <p class="h2note">The directory returns <b>every</b> route a merchant supports; the agent takes
+      the highest one it can use. Three of the four are <b>reserved</b> — named in the contract,
+      nothing filling them yet.</p>
 
     <ol class="ladder" id="ladder">
       <li class="rung rung--reserved rev">
         <span class="node" aria-hidden="true"></span>
         <div class="slot"><code>mcp</code><span class="plain">the merchant’s own tools</span></div>
-        <p class="what">The merchant exposes tools an agent can call directly. Nothing to read off a
-          page, nothing to type into a form.</p>
-        <p class="who">Reserved slot — <b>no behaviour is defined for it here yet.</b></p>
+        <p class="what">The agent calls them directly. No page to read, no form to fill.</p>
         <span class="chip chip--reserved">reserved</span>
       </li>
 
       <li class="rung rung--reserved rev" style="--d:.07s">
         <span class="node" aria-hidden="true"></span>
         <div class="slot"><code>machine_payments</code><span class="plain">pay without a card form</span></div>
-        <p class="what">A payment route built for machines: the merchant takes the payment directly,
-          so there is no card form to find, fill or fight.</p>
-        <p class="who">Reserved slot — <b>no behaviour is defined for it here yet.</b></p>
+        <p class="what">The merchant takes the payment. Nothing to type, nothing to mistype.</p>
         <span class="chip chip--reserved">reserved</span>
       </li>
 
       <li class="rung rung--reserved rev" style="--d:.14s">
         <span class="node" aria-hidden="true"></span>
         <div class="slot"><code>provisioning</code><span class="plain">a credential for this purchase</span></div>
-        <p class="what">A credential scoped to this merchant and this order, rather than a general
-          payment method the agent has to be trusted with.</p>
-        <p class="who">Reserved slot — <b>no behaviour is defined for it here yet.</b></p>
+        <p class="what">Scoped to this merchant and this order — not a card the agent has to be trusted with.</p>
         <span class="chip chip--reserved">reserved</span>
       </li>
 
       <li class="rung rung--live rev" style="--d:.21s">
         <span class="node" aria-hidden="true"></span>
         <div class="slot"><code>browser_checkout</code><span class="plain">drive the page, with a map</span></div>
-        <p class="what">No machine surface, so the agent works the site the way a person would — but
-          carrying a playbook of what is actually on that checkout: where the guest path is, what
-          the page prefills, which button lies.</p>
-        <p class="who">Person sets the spending cap, approves the amount, and takes the keyboard at
-          login, captcha and card challenges. <a href="./#journeys">See what this rung is worth
-          &rarr;</a></p>
+        <p class="what">The agent works the site like a person, carrying a playbook of what is on
+          that checkout: where the guest path is, what prefills, which button lies.</p>
+        <p class="who">The person still sets the cap and approves the amount.
+          <a href="./#journeys">See what this rung is worth &rarr;</a></p>
         <span class="chip chip--live">772 domains</span>
       </li>
 
       <li class="rung rung--none rev" style="--d:.28s">
         <span class="node" aria-hidden="true"></span>
         <div class="slot"><code>{ }</code><span class="plain">no route known</span></div>
-        <p class="what">Every slot is empty. The agent has learned something useful anyway: this is
-          not a merchant to improvise at.</p>
-        <p class="who">An unknown merchant is <b>never an error</b> — it comes back as a normal
-          answer with nothing in it, so the agent can hand over cleanly instead of guessing.</p>
+        <p class="what">Nothing to go on, which is itself worth knowing — the agent hands over
+          rather than improvising.</p>
+        <p class="who">An unknown merchant is <b>never an error.</b> It comes back as a normal
+          answer with nothing in it.</p>
         <span class="chip chip--none">70 of 614</span>
       </li>
     </ol>
 
-    <p class="ladder-note">Only the fourth rung exists today, and the harness has already measured
-      what it is worth: the same purchases run with that playbook in the prompt went from
-      <b>20 of 28 to 24 of 28</b>, and runs where the agent gave up went from <b>9 to 0</b>. Every
-      rung above it should beat it, because each one removes a page the agent has to interpret.</p>
+    <p class="ladder-note">The one rung that exists has already been measured. Same purchases, that
+      playbook added to the prompt: completed went from <b>20 of 28 to 24 of 28</b>, and runs where
+      the agent gave up went from <b>9 to 0</b>. Every rung above should beat it, because each one
+      removes a page the agent has to interpret.</p>
   </section>
 
   <!-- ================= THE PERSON ================= -->
   <section>
     <h2>The person</h2>
-    <p class="h2sub">Four moments a human is in the loop</p>
-    <p class="h2note">These hold on every rung, populated or not — the route changes how the agent
-      pays, not who is accountable for it. Quotes are from the policy every agent is given.</p>
+    <p class="h2sub">Four things the route never changes</p>
+    <p class="h2note">Whichever rung an agent takes, it carries the same policy. Quoted verbatim —
+      these are the lines that keep a person in the loop.</p>
     <div class="moments" id="moments">
       <div class="moment rev">
         <div class="when">Before</div>
-        <p class="act">Sets the bounds</p>
-        <p class="who">One merchant, one cart, one amount, one credential — fixed before the agent
-          starts.</p>
+        <p class="act">The bounds</p>
         <p class="quote">“Use only the approved merchant, cart, amount, currency, and credential.”</p>
       </div>
       <div class="moment rev" style="--d:.07s">
-        <div class="when">At the total</div>
-        <p class="act">Approves the spend</p>
-        <p class="who">The agent asks for the exact amount once the total is known, and cannot pay
-          until someone says yes.</p>
+        <div class="when">At a no</div>
+        <p class="act">No second guess</p>
         <p class="quote">“Never switch payment methods or repeat a declined or ambiguous submit.”</p>
       </div>
       <div class="moment rev" style="--d:.14s">
         <div class="when">At a wall</div>
-        <p class="act">Takes the keyboard</p>
-        <p class="who">Sign-in, captcha, bot defence and card challenges are handed over rather than
-          worked around.</p>
+        <p class="act">The keyboard</p>
         <p class="quote">“Hand login, captcha, WAF, and 3DS to the user.”</p>
       </div>
       <div class="moment rev" style="--d:.21s">
         <div class="when">After</div>
-        <p class="act">Is the only proof</p>
-        <p class="who">The agent does not get to declare victory. Only the merchant’s own
-          confirmation counts.</p>
+        <p class="act">The only proof</p>
         <p class="quote">“Mark success only from merchant confirmation.”</p>
       </div>
     </div>
@@ -413,12 +427,13 @@
   <!-- ================= WHAT IT KNOWS ================= -->
   <section>
     <h2>Today</h2>
-    <p class="h2sub">What the one populated rung actually covers</p>
-    <p class="h2note">Across the 614 merchants on the target list. A separate 772 domains can be
-      answered in total, because the advice stores reach past that list.</p>
+    <p class="h2sub">What that one rung covers</p>
+    <p class="h2note">772 domains can be answered in all. Against the 614-merchant target list it
+      looks like this.</p>
 
     <div class="cov">
       <div>
+        <p class="covlab">Reach <span>614 merchants on the list</span></p>
         <div class="bar rev" role="img" aria-label="Of 614 merchants: 462 have advice from an actual checkout walk, 82 from classification alone, and 70 are not addressable by URL yet.">
           <span class="b-walk" style="width: 75.24%"></span>
           <span class="b-infer" style="width: 13.36%"></span>
@@ -432,20 +447,20 @@
       </div>
 
       <div>
+        <p class="covlab">Evidence <span>455 walked at least once</span></p>
         <ul class="conf">
-          <li><span>Reproduced across two sessions</span><span class="n">76</span></li>
+          <li><span>Held up on a second walk</span><span class="n">76</span></li>
           <li><span>Seen once only</span><span class="n">372</span></li>
-          <li><span>Contradicted on re-probe</span><span class="n bad">7</span></li>
+          <li><span>Contradicted on re-walk</span><span class="n bad">7</span></li>
         </ul>
       </div>
     </div>
 
     <div class="caveat">
-      <b>None of this is validated.</b> Every record is a candidate: 398 of 537 are low confidence,
-      121 medium, 18 high. Most merchants were probed once, from one machine, at one moment — enough
-      to show something <i>was</i> true, not that it stays true. Seven records were contradicted the
-      second time they were checked. Advice built this way is a head start, not a guarantee, and the
-      rungs above it are the actual fix.
+      <b>None of it is validated.</b> Every record is a candidate — 398 low confidence, 121 medium,
+      18 high. Probing a checkout once shows what <i>was</i> true, not what stays true. That is why
+      the rungs above this one matter: they replace a page that has to be read with a route that
+      does not.
     </div>
   </section>
 
