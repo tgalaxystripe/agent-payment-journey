@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>An agent's payment journey, with and without advice</title>
+<title>An agent’s payment journey, with and without advice</title>
 <link rel="icon" href="data:,">
 <meta name="description" content="Three real agent checkout runs, each executed twice — once with merchant-specific advice in the prompt, once without.">
-<meta property="og:title" content="An agent's payment journey, with and without advice">
+<meta property="og:title" content="An agent’s payment journey, with and without advice">
 <meta property="og:description" content="Both agents hit the same sign-in wall. Only one knew there was a door.">
 <meta name="twitter:card" content="summary_large_image">
 <style>
@@ -28,6 +28,7 @@
     --warning:    #fab219;
     --wash:       rgba(42,120,214,0.07);
     --wash-bad:   rgba(208,59,59,0.06);
+    --wash-ok:    rgba(12,163,12,0.07);
   }
   @media (prefers-color-scheme: dark) {
     :root:where(:not([data-theme="light"])) {
@@ -44,6 +45,7 @@
       --good-ink:  #0ca30c;
       --wash:      rgba(57,135,229,0.11);
       --wash-bad:  rgba(208,59,59,0.10);
+      --wash-ok:   rgba(12,163,12,0.11);
     }
   }
   :root[data-theme="dark"] {
@@ -60,6 +62,7 @@
     --good-ink:  #0ca30c;
     --wash:      rgba(57,135,229,0.11);
     --wash-bad:  rgba(208,59,59,0.10);
+    --wash-ok:   rgba(12,163,12,0.11);
   }
 
   * { box-sizing: border-box; }
@@ -73,6 +76,7 @@
     line-height: 1.55;
   }
   .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 24px 96px; }
+  :focus-visible { outline: 2px solid var(--with); outline-offset: 2px; border-radius: 4px; }
 
   /* ---------- header ---------- */
   .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
@@ -81,37 +85,38 @@
     color: var(--muted); margin: 0 0 12px;
   }
   h1 { font-size: clamp(28px, 4.6vw, 44px); line-height: 1.12; letter-spacing: -.02em; margin: 0 0 16px; font-weight: 650; }
-  .lede { font-size: 17px; color: var(--ink-2); max-width: 68ch; margin: 0 0 8px; }
+  .lede { font-size: 17px; color: var(--ink-2); max-width: 66ch; margin: 0 0 10px; }
+  .lede b { color: var(--ink); font-weight: 600; }
   .provenance { font-size: 13px; color: var(--muted); margin: 20px 0 0; }
   .themebtn {
-    flex: none; background: var(--surface-1); color: var(--ink-2); border: 1px solid var(--ring);
-    border-radius: 8px; padding: 7px 12px; font: inherit; font-size: 13px; cursor: pointer;
+    flex: none; background: transparent; color: var(--muted); border: 1px solid var(--ring);
+    border-radius: 999px; padding: 6px 13px; font: inherit; font-size: 12.5px; cursor: pointer;
   }
-  .themebtn:hover { color: var(--ink); }
+  .themebtn:hover { color: var(--ink); border-color: var(--baseline); }
 
   h2 { font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
-  .h2sub { font-size: 20px; font-weight: 600; letter-spacing: -.01em; margin: 0 0 20px; color: var(--ink); }
-  section { margin-top: 64px; }
-  hr.rule { border: 0; border-top: 1px solid var(--grid); margin: 0; }
+  .h2sub { font-size: 20px; font-weight: 600; letter-spacing: -.01em; margin: 0 0 6px; color: var(--ink); }
+  .h2note { font-size: 13.5px; color: var(--muted); margin: 0 0 20px; max-width: 74ch; }
+  section { margin-top: 68px; }
 
   /* ---------- KPI row ---------- */
   .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
   .tile {
-    background: var(--surface-1); border: 1px solid var(--ring); border-radius: 12px; padding: 16px 18px 18px;
+    background: var(--surface-1); border: 1px solid var(--ring); border-radius: 12px;
+    padding: 16px 18px 18px; display: flex; flex-direction: column;
   }
-  .tile .label { font-size: 12.5px; color: var(--ink-2); margin-bottom: 10px; min-height: 2.6em; }
-  .tile .pair { display: flex; align-items: baseline; gap: 9px; }
-  .tile .v-without { font-size: 22px; font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .tile .arrow { color: var(--baseline); font-size: 15px; }
-  .tile .v-with { font-size: 34px; font-weight: 650; letter-spacing: -.02em; color: var(--ink); font-variant-numeric: tabular-nums; }
-  .tile .delta { font-size: 12.5px; margin-top: 8px; color: var(--ink-2); }
-  .tile .delta strong { color: var(--good-ink); font-weight: 600; }
-  .tile .foot { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
-
-  /* ---------- legend ---------- */
-  .legend { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; font-size: 13px; color: var(--ink-2); margin: 0 0 20px; }
-  .legend span { display: inline-flex; align-items: center; gap: 7px; }
-  .swatch { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+  .tile .label { font-size: 12.5px; color: var(--ink-2); margin-bottom: 14px; }
+  .tile .pair { display: flex; align-items: flex-end; gap: 10px; }
+  .tile .val { display: flex; flex-direction: column; }
+  .tile .cap {
+    font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--muted); margin-top: 2px;
+  }
+  .tile .v-without { font-size: 21px; font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .tile .arrow { color: var(--muted); font-size: 16px; padding-bottom: 17px; }
+  .tile .v-with { font-size: 33px; font-weight: 650; letter-spacing: -.02em; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1.05; }
+  .tile .delta { font-size: 12.5px; margin-top: 12px; color: var(--good-ink); font-weight: 600; }
+  .tile .foot { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 
   /* ---------- tabs ---------- */
   .tabs { display: flex; gap: 6px; margin-bottom: 22px; flex-wrap: wrap; }
@@ -122,30 +127,42 @@
   .tab:hover { color: var(--ink); }
   .tab[aria-selected="true"] { background: var(--ink); color: var(--plane); border-color: var(--ink); font-weight: 550; }
 
-  .taskline { font-size: 14px; color: var(--ink-2); margin: 0 0 6px; }
+  .taskline { font-size: 14px; color: var(--ink-2); margin: 0 0 8px; }
   .taskline b { color: var(--ink); font-weight: 600; }
-  .headline { font-size: 21px; font-weight: 600; letter-spacing: -.015em; margin: 0 0 26px; max-width: 60ch; line-height: 1.3; }
+  .headline { font-size: 21px; font-weight: 600; letter-spacing: -.015em; margin: 0 0 26px; max-width: 58ch; line-height: 1.3; }
 
   /* ---------- journeys ---------- */
   .lanes { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
-  .lane { background: var(--surface-1); border: 1px solid var(--ring); border-radius: 14px; overflow: hidden; }
-  .lane-hd { padding: 15px 18px 14px; border-bottom: 1px solid var(--grid); }
-  .lane-title { display: flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 650; letter-spacing: -.01em; }
-  .lane-bar { height: 3px; border-radius: 2px; }
+  .lane {
+    background: var(--surface-1); border: 1px solid var(--ring); border-radius: 14px;
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+  .lane-bar { height: 3px; flex: none; }
   .lane--without .lane-bar { background: var(--without); }
   .lane--with .lane-bar { background: var(--with); }
-  .lane-meta { font-size: 12.5px; color: var(--muted); margin-top: 5px; font-variant-numeric: tabular-nums; }
-  .verdict { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; margin-top: 10px; }
-  .verdict--ok { color: var(--good-ink); }
-  .verdict--fail { color: var(--critical); }
+  .lane-hd { padding: 14px 18px 13px; border-bottom: 1px solid var(--grid); }
+  .lane-title { font-size: 14.5px; font-weight: 650; letter-spacing: -.01em; }
+  .lane-meta { font-size: 12.5px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
+
+  .lane-ft {
+    margin-top: auto; padding: 13px 18px; border-top: 1px solid var(--grid);
+    display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600;
+  }
+  .lane-ft--ok   { background: var(--wash-ok);  color: var(--good-ink); }
+  .lane-ft--fail { background: var(--wash-bad); color: var(--critical); }
   .icon { width: 14px; height: 14px; flex: none; }
 
-  .steps { list-style: none; margin: 0; padding: 6px 0 10px; --tcol: 66px; --tpad: 18px; --tgap: 12px; }
+  .steps { list-style: none; margin: 0; padding: 6px 0 12px; --tcol: 66px; --tpad: 18px; --tgap: 12px; }
   .step { display: grid; grid-template-columns: var(--tcol) 1fr; gap: var(--tgap); padding: 9px var(--tpad); position: relative; }
   .step .t { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; padding-top: 2px; white-space: nowrap; }
   .step .body { border-left: 2px solid var(--grid); padding-left: 15px; padding-bottom: 2px; }
   .step .lbl { display: block; font-size: 13.5px; font-weight: 600; letter-spacing: -.005em; }
   .step .det { display: block; font-size: 13px; color: var(--ink-2); margin-top: 2px; }
+  .step .det code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px;
+    background: var(--plane); border: 1px solid var(--ring); border-radius: 4px;
+    padding: 0 4px; overflow-wrap: anywhere;
+  }
   .step .dot {
     position: absolute;
     left: calc(var(--tpad) + var(--tcol) + var(--tgap) - 3.5px);
@@ -157,7 +174,6 @@
   /* step kinds */
   .step--wall { background: var(--wash-bad); }
   .step--wall .dot { background: var(--warning); }
-  .step--wall .lbl { color: var(--ink); }
   .step--wall .body { border-left-color: var(--warning); }
   .step--wall .flag { font-size: 11px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 2px; }
 
@@ -169,9 +185,13 @@
   .step--dead .body { border-left-style: dashed; }
   .step--dead .dot { background: var(--muted); }
 
+  /* a pause, not a step: no dot, no elapsed stamp — the duration is the content */
+  .step--wait { padding-top: 7px; padding-bottom: 7px; }
   .step--wait .body { border-left-style: dotted; border-left-color: var(--baseline); }
   .step--wait .lbl { color: var(--ink-2); font-weight: 550; }
-  .step--wait .dot { background: transparent; border: 2px solid var(--baseline); box-shadow: none; width: 7px; height: 7px; }
+  .step--wait .lbl b { color: var(--ink); font-weight: 650; font-variant-numeric: tabular-nums; }
+  .step--wait .det { font-size: 12px; color: var(--muted); }
+  .step--wait .dot { display: none; }
 
   .step--end-ok, .step--end-fail { padding-top: 13px; padding-bottom: 15px; }
   .step--end-ok .body { border-left-color: var(--good); }
@@ -181,67 +201,84 @@
   .step--end-fail .dot { background: var(--critical); }
   .step--end-fail .lbl { color: var(--critical); }
 
-  .diverge {
-    display: flex; align-items: center; gap: 10px; margin: 26px 0 22px;
-    font-size: 12px; font-weight: 650; letter-spacing: .07em; text-transform: uppercase; color: var(--muted);
-  }
-  .diverge::before, .diverge::after { content: ""; height: 1px; background: var(--grid); flex: 1; }
-
   /* ---------- advice ---------- */
   .advice { background: var(--surface-1); border: 1px solid var(--ring); border-radius: 14px; padding: 4px 0; }
-  .arow { display: grid; grid-template-columns: 92px 1fr; gap: 14px; padding: 13px 20px; border-bottom: 1px solid var(--grid); }
+  .arow { display: grid; grid-template-columns: 92px 1fr; gap: 14px; padding: 14px 20px; border-bottom: 1px solid var(--grid); }
   .arow:last-child { border-bottom: 0; }
   .arow--decisive { background: var(--wash); }
-  .atag { font-size: 11px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); padding-top: 2px; }
+  .atag { font-size: 11px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
   .arow--decisive .atag { color: var(--with); }
-  .atext { font-size: 13.5px; color: var(--ink-2); }
+  .atext { font-size: 13.5px; color: var(--ink-2); max-width: 76ch; }
   .arow--decisive .atext { color: var(--ink); }
-  .atext code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; background: var(--plane); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--ring); overflow-wrap: anywhere; }
+  .atext code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px;
+    background: var(--plane); padding: 1px 5px; border-radius: 4px; border: 1px solid var(--ring);
+    overflow-wrap: anywhere;
+  }
+  /* long URLs get their own line rather than tearing across two chips */
+  .atext code.cblock { display: block; margin: 7px 0; padding: 8px 11px; line-height: 1.5; }
   .adecisive-note { font-size: 12px; font-weight: 600; color: var(--with); display: block; margin-bottom: 3px; letter-spacing: .04em; text-transform: uppercase; }
 
   /* ---------- bars ---------- */
-  .chart { background: var(--surface-1); border: 1px solid var(--ring); border-radius: 14px; padding: 24px 26px 20px; }
-  .barrow { display: grid; grid-template-columns: 116px 1fr; gap: 16px; align-items: center; margin-bottom: 14px; }
-  .barrow:last-of-type { margin-bottom: 6px; }
-  .barlabel { font-size: 13.5px; color: var(--ink-2); text-align: right; }
-  .bartrack { position: relative; height: 26px; }
-  .bar { height: 26px; border-radius: 0 5px 5px 0; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; }
-  .bar span { font-size: 13px; font-weight: 650; color: #fff; font-variant-numeric: tabular-nums; }
+  .chart { background: var(--surface-1); border: 1px solid var(--ring); border-radius: 14px; padding: 22px 26px 18px; --labcol: 136px; }
+  .chart + .chart { margin-top: 16px; }
+  .chart-title { font-size: 14px; font-weight: 600; color: var(--ink); margin: 0 0 2px; }
+  .chart-note { font-size: 12.5px; color: var(--muted); margin: 0 0 20px; max-width: 74ch; }
+  .barrow { display: grid; grid-template-columns: var(--labcol) 1fr; gap: 16px; align-items: center; margin-bottom: 16px; }
+  .barrow:last-of-type { margin-bottom: 4px; }
+  .barlabel { text-align: right; }
+  .barlabel .nm { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--ink-2); }
+  .barlabel .ct { display: block; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; margin-top: 1px; }
+  .swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; display: inline-block; }
+  .bartrack { display: flex; align-items: center; gap: 10px; height: 24px; }
+  .bar { height: 24px; border-radius: 0 4px 4px 0; flex: none; }
   .bar--without { background: var(--without); }
   .bar--with { background: var(--with); }
-  .axis { border-top: 1px solid var(--baseline); margin-left: 132px; display: flex; justify-content: space-between; padding-top: 6px; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .barval { flex: none; font-size: 14px; font-weight: 650; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .axis {
+    border-top: 1px solid var(--baseline); margin-left: calc(var(--labcol) + 16px);
+    display: flex; justify-content: space-between; padding-top: 6px;
+    font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums;
+  }
 
   table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
-  caption { text-align: left; font-size: 13px; color: var(--muted); padding-bottom: 12px; }
+  caption { text-align: left; font-size: 12.5px; color: var(--muted); padding-bottom: 14px; max-width: 74ch; }
   th, td { text-align: right; padding: 10px 12px; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
   th:first-child, td:first-child { text-align: left; font-variant-numeric: normal; }
   thead th { font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  thead th .hd { display: inline-flex; align-items: center; gap: 7px; }
   tbody tr:last-child td { border-bottom: 0; }
-  td.good { color: var(--good-ink); font-weight: 600; }
-  td.zero { color: var(--good-ink); font-weight: 650; }
+  /* fixed slots so the percentages line up in one column and the counts in another,
+     even though both live in the same cell */
+  td .pc { font-weight: 650; display: inline-block; min-width: 3.1em; text-align: right; }
+  td .ct { color: var(--muted); font-weight: 400; display: inline-block; min-width: 4.6em; text-align: right; }
+  tr.good td .pc { color: var(--good-ink); }
+  td.zero .pc { color: var(--good-ink); }
+  tr.total td { font-weight: 650; }
+  tr.total .ct { color: var(--ink); font-weight: 650; }
 
-  details.method { margin-top: 20px; }
+  details.method { margin-top: 22px; }
   details.method summary { cursor: pointer; font-size: 13.5px; color: var(--ink-2); font-weight: 550; }
   details.method summary:hover { color: var(--ink); }
   .method-body { font-size: 13.5px; color: var(--ink-2); max-width: 74ch; }
   .method-body ul { padding-left: 20px; }
-  .method-body li { margin-bottom: 7px; }
+  .method-body li { margin-bottom: 8px; }
   .method-body b { color: var(--ink); font-weight: 600; }
-  footer { margin-top: 72px; padding-top: 22px; border-top: 1px solid var(--grid); font-size: 12.5px; color: var(--muted); }
+  footer { margin-top: 76px; padding-top: 22px; border-top: 1px solid var(--grid); font-size: 12.5px; color: var(--muted); max-width: 84ch; }
 
   @media (max-width: 860px) {
     .kpis { grid-template-columns: repeat(2, 1fr); }
     .lanes { grid-template-columns: 1fr; }
     .wrap { padding: 28px 16px 72px; }
+    .chart { padding: 20px 18px 16px; --labcol: 118px; }
   }
   @media (max-width: 520px) {
     .kpis { grid-template-columns: 1fr; }
-    .tile .label { min-height: 0; }
     .arow, .step { grid-template-columns: 1fr; gap: 4px; }
     .step .t { text-align: left; }
     .step .dot { display: none; }
     .step .body { border-left: 2px solid var(--grid); }
-    .barrow { grid-template-columns: 1fr; gap: 4px; }
+    .barrow { grid-template-columns: 1fr; gap: 5px; }
     .barlabel { text-align: left; }
     .axis { margin-left: 0; }
   }
@@ -253,7 +290,7 @@
   <div class="topbar">
     <div>
       <p class="eyebrow">Agentic checkout · A/B evaluation</p>
-      <h1>An agent's payment journey,<br>with and without advice</h1>
+      <h1>An agent’s payment journey,<br>with and without advice</h1>
     </div>
     <button class="themebtn" id="themebtn" type="button">Dark</button>
   </div>
@@ -261,7 +298,7 @@
   <p class="lede">
     An AI agent was given a shopping task and a wallet, and told to buy one specific item.
     Then the same task was run again — identical model, identical browser, identical budget — with
-    one extra paragraph in the prompt: <b>a short playbook for that merchant's checkout</b>,
+    one extra paragraph in the prompt: <b>a short playbook for that merchant’s checkout</b>,
     written from what earlier agents had already learned there.
   </p>
   <p class="lede">Everything below is from those real runs.</p>
@@ -271,10 +308,7 @@
   <section>
     <h2>The headline</h2>
     <p class="h2sub">What one paragraph of merchant advice changed</p>
-    <div class="legend">
-      <span><i class="swatch" style="background:var(--without)"></i> Without advice</span>
-      <span><i class="swatch" style="background:var(--with)"></i> With advice</span>
-    </div>
+    <p class="h2note">Each tile reads left to right: the unadvised run, then the advised one.</p>
     <div class="kpis" id="kpis"></div>
   </section>
 
@@ -282,6 +316,8 @@
   <section>
     <h2>Side by side</h2>
     <p class="h2sub">One purchase, two journeys</p>
+    <p class="h2note">Every line below is a milestone the agent reported as it worked. Times are from the
+      start of the run.</p>
     <div class="tabs" id="tabs" role="tablist"></div>
     <p class="taskline" id="taskline"></p>
     <p class="headline" id="jheadline"></p>
@@ -292,31 +328,31 @@
   <section>
     <h2>The input</h2>
     <p class="h2sub" id="advice-title">The advice, as the agent received it</p>
+    <p class="h2note" id="advice-note"></p>
     <div class="advice" id="advice"></div>
   </section>
 
   <!-- ================= AGGREGATE ================= -->
   <section>
     <h2>All runs</h2>
-    <p class="h2sub">It isn't just these three</p>
-    <div class="chart">
-      <div id="bars"></div>
-      <div class="axis"><span>0%</span><span>50%</span><span>100%</span></div>
-    </div>
+    <p class="h2sub">It isn’t just these three</p>
+    <p class="h2note">Two reads of the same 85 runs. The paired one is stricter, and it is the number
+      to quote.</p>
+    <div id="bars"></div>
 
     <div class="chart" style="margin-top:16px">
       <table id="fctable"></table>
     </div>
 
     <details class="method">
-      <summary>Method, and what these numbers do and don't show</summary>
+      <summary>Method, and what these numbers do and don’t show</summary>
       <div class="method-body">
         <ul>
-          <li><b>What a run is.</b> One agent, one real browser, one real merchant site, one real card, told to buy one specific item under a spending cap. A run counts as a success only on a merchant order confirmation — not on the agent's own say-so.</li>
-          <li><b>What "advice" is.</b> A short, merchant-specific playbook appended to the prompt: the checkout's URL sequence, its known traps, how its confirmation page looks, and when to ask the human. It is assembled from what previous agents observed on that site. Nothing about the model, tools, or permissions changes between arms.</li>
-          <li><b>The paired numbers are the honest ones.</b> The two arms aren't perfectly balanced (46 unadvised vs 34 advised runs across several rounds), so the headline rates can drift on merchant mix. Restricting to the <b>28 cases where the same task ran both ways</b> gives 20/28 → 24/28. Advice fixed 5 runs and broke 1.</li>
-          <li><b>Human approval time is excluded from working time.</b> Every purchase pauses for a human to approve the wallet spend request. That wait ranged from 11 seconds to 10 minutes and is not the agent's doing, so the time figures count only the agent's own active work.</li>
-          <li><b>Caveats.</b> Small n. Live commercial sites that change under you. Two model versions across rounds. Merchants were chosen because agents already struggled there, so the unadvised baseline is not a general "agents can't check out" rate. Two of the three journeys shown were unadvised failures, which is the interesting case, not the typical one.</li>
+          <li><b>What a run is.</b> One agent, one real browser, one real merchant site, one real card, told to buy one specific item under a spending cap. A run counts as a success only on a merchant order confirmation — not on the agent’s own say-so.</li>
+          <li><b>What “advice” is.</b> A short, merchant-specific playbook appended to the prompt: the checkout’s URL sequence, its known traps, how its confirmation page looks, and when to ask the human. It is assembled from what previous agents observed on that site. Nothing about the model, tools, or permissions changes between arms.</li>
+          <li><b>The paired numbers are the honest ones.</b> The two arms aren’t perfectly balanced (46 unadvised vs 34 advised runs across several rounds), so the headline rates can drift on merchant mix. Restricting to the <b>28 cases where the same task ran both ways</b> gives 20/28 → 24/28. Advice fixed 5 runs and broke 1.</li>
+          <li><b>Human approval time is excluded from working time.</b> Every purchase pauses for a human to approve the wallet spend request. That wait ranged from 11 seconds to 10 minutes and is not the agent’s doing, so the time figures count only the agent’s own active work.</li>
+          <li><b>Caveats.</b> Small n. Live commercial sites that change under you. Two model versions across rounds. Merchants were chosen because agents already struggled there, so the unadvised baseline is not a general “agents can’t check out” rate. All three journeys shown are cases where the unadvised run failed — the interesting case, not the typical one; unadvised runs completed 67% of the time overall.</li>
         </ul>
       </div>
     </details>
@@ -338,7 +374,6 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
     });
   }
-  // Wrap URL-ish and selector-ish tokens in <code> for legibility. Runs on escaped text.
   // Wrap URL-ish / selector-ish tokens in <code>. Operates on already-escaped text,
   // so entity sequences (&amp; &lt; &gt;) must be matched as units — a bare [^\s,;]+
   // would split a query string at the ';' inside '&amp;'.
@@ -352,7 +387,12 @@
     "|\\/[a-z][a-z0-9._-]*\\.html" +
     "|\\/products\\/" + ENT + "*\\/" +
     "|#binBtn_btn_1|gchru)", "g");
-  function codeify(s) { return s.replace(CODE_RE, "<code>$1</code>"); }
+  function codeify(s) {
+    return s.replace(CODE_RE, function (m) {
+      // Long tokens become their own line; an inline chip would tear across two boxes.
+      return '<code' + (m.length >= 56 ? ' class="cblock"' : "") + ">" + m + "</code>";
+    });
+  }
 
   function clock(sec) {
     if (sec < 60) return sec + "s";
@@ -364,6 +404,9 @@
     var m = Math.floor(sec / 60), s = sec % 60;
     return m + ":" + (s < 10 ? "0" : "") + s;
   }
+  function swatch(side) {
+    return '<i class="swatch" style="background:var(--' + side + ')" aria-hidden="true"></i>';
+  }
 
   /* ---------------- provenance + footer ---------------- */
   var a = STATS.arms;
@@ -372,8 +415,8 @@
     " · " + a.without.n + " without advice, " + a["with"].n + " with";
   document.getElementById("footer").innerHTML =
     "Real runs against live merchant sites. Buyer details, order numbers, spend-request IDs and card digits are redacted. " +
-    "Merchant playbook text and the agents' own milestone notes are reproduced from the runs themselves, with one substitution " +
-    "throughout: the wallet product's internal name is replaced with &ldquo;wallet&rdquo;.";
+    "Merchant playbook text and the agents&rsquo; own milestone notes are reproduced from the runs themselves, with one substitution " +
+    "throughout: the wallet product&rsquo;s internal name is replaced with &ldquo;wallet&rdquo;.";
 
   /* ---------------- KPI tiles ---------------- */
   var p = STATS.paired;
@@ -390,14 +433,14 @@
       without: a.without.abandoned,
       with: a["with"].abandoned,
       delta: "down to zero",
-      foot: "of " + a.without.n + " and " + a["with"].n + " runs"
+      foot: "9 of " + a.without.n + " · 0 of " + a["with"].n
     },
     {
-      label: "Median agent working time per run (min:sec)",
+      label: "Median agent working time per run",
       without: mmss(a.without.medActiveS),
       with: mmss(a["with"].medActiveS),
       delta: "66s faster",
-      foot: "excludes waiting on human approval"
+      foot: "min:sec, excluding approval waits"
     },
     {
       label: "Got it right on the first attempt",
@@ -411,11 +454,13 @@
     return '<div class="tile">' +
       '<div class="label">' + esc(t.label) + "</div>" +
       '<div class="pair">' +
-        '<span class="v-without">' + esc(t.without) + "</span>" +
-        '<span class="arrow" aria-label="becomes">&rarr;</span>' +
-        '<span class="v-with">' + esc(t["with"]) + "</span>" +
+          '<span class="val"><span class="v-without">' + esc(t.without) + "</span>" +
+            '<span class="cap">without</span></span>' +
+          '<span class="arrow" aria-hidden="true">&rarr;</span>' +
+          '<span class="val"><span class="v-with">' + esc(t["with"]) + "</span>" +
+            '<span class="cap">with advice</span></span>' +
       "</div>" +
-      '<div class="delta"><strong>' + esc(t.delta) + "</strong></div>" +
+      '<div class="delta">' + esc(t.delta) + "</div>" +
       '<div class="foot">' + esc(t.foot) + "</div>" +
     "</div>";
   }).join("");
@@ -423,19 +468,26 @@
   /* ---------------- journeys ---------------- */
   var current = 0;
 
-  function renderStep(s, lastT) {
+  function renderStep(s) {
     var cls = "step step--" + s.kind;
-    var time = "+" + clock(s.t);
-    if (s.kind === "wait" && s.waitUntil) time = "+" + clock(s.t);
-    var flag = "";
-    if (s.kind === "wall") flag = '<span class="flag">Same obstacle</span>';
-    var det = codeify(esc(s.detail));
+    // A wait is a gap in the story, not a milestone: the duration is the label and the
+    // elapsed column stays empty so it doesn't repeat the step above it.
+    if (s.kind === "wait") {
+      return '<li class="' + cls + '">' +
+        '<span class="t"></span>' +
+        '<span class="body">' +
+          '<span class="lbl">Paused <b>' + clock(s.waitUntil - s.t) + "</b> — waiting on human approval</span>" +
+          '<span class="det">' + esc(s.detail) + "</span>" +
+        "</span>" +
+      "</li>";
+    }
+    var flag = s.kind === "wall" ? '<span class="flag">Same obstacle</span>' : "";
     return '<li class="' + cls + '">' +
       '<span class="dot" aria-hidden="true"></span>' +
-      '<span class="t">' + time + "</span>" +
+      '<span class="t">+' + clock(s.t) + "</span>" +
       '<span class="body">' + flag +
         '<span class="lbl">' + esc(s.label) + "</span>" +
-        '<span class="det">' + det + "</span>" +
+        '<span class="det">' + codeify(esc(s.detail)) + "</span>" +
       "</span>" +
     "</li>";
   }
@@ -444,15 +496,59 @@
     var ok = arm.outcome === "success";
     var title = side === "with" ? "With advice" : "Without advice";
     return '<div class="lane lane--' + side + '">' +
+      '<div class="lane-bar"></div>' +
       '<div class="lane-hd">' +
-        '<div class="lane-bar"></div>' +
-        '<div class="lane-title" style="margin-top:10px">' + title + "</div>" +
-        '<div class="lane-meta">' + arm.toolCalls + " browser actions · " + clock(arm.activeS) + " of agent working time</div>" +
-        '<div class="verdict verdict--' + (ok ? "ok" : "fail") + '">' + (ok ? ICON_OK : ICON_FAIL) +
-          esc(arm.verdict) + "</div>" +
+        '<div class="lane-title">' + title + "</div>" +
+        '<div class="lane-meta">' + clock(arm.activeS) + " of agent working time · " +
+          arm.toolCalls + " browser actions</div>" +
       "</div>" +
-      '<ul class="steps">' + arm.steps.map(function (s) { return renderStep(s); }).join("") + "</ul>" +
+      '<ul class="steps">' + arm.steps.map(renderStep).join("") + "</ul>" +
+      '<div class="lane-ft lane-ft--' + (ok ? "ok" : "fail") + '">' +
+        (ok ? ICON_OK : ICON_FAIL) + "<span>" + esc(arm.verdict) + "</span>" +
+      "</div>" +
     "</div>";
+  }
+
+  // The whole point of the pair is "same obstacle, different outcome" — so put the two
+  // obstacle rows on one horizontal line and give them the same height, letting their
+  // pink bands read as a single band across both cards.
+  function alignWalls() {
+    var lists = document.querySelectorAll("#lanes .steps");
+    var walls = [];
+    Array.prototype.forEach.call(lists, function (l) {
+      var w = l.querySelector(".step--wall");
+      if (!w) return;
+      w.style.minHeight = "";
+      // The slack goes into the *previous* row's rail, so both lanes still start at +0s
+      // together and the extra distance reads as elapsed time rather than a layout hole.
+      var prev = w.previousElementSibling;
+      var rail = prev && prev.querySelector(".body");
+      if (rail) rail.style.paddingBottom = "";
+      walls.push({ row: w, rail: rail });
+    });
+    if (walls.length !== 2 || lists.length !== 2) return;
+    if (window.innerWidth <= 860) return;   // single column: nothing to align to
+
+    var h = Math.max(walls[0].row.offsetHeight, walls[1].row.offsetHeight);
+    walls.forEach(function (w) { w.row.style.minHeight = h + "px"; });
+
+    var d = walls[0].row.getBoundingClientRect().top - walls[1].row.getBoundingClientRect().top;
+    var behind = d > 0 ? walls[1] : walls[0];
+    var gap = Math.abs(d);
+    if (gap < 1 || !behind.rail) return;
+    behind.rail.style.paddingBottom =
+      (parseFloat(getComputedStyle(behind.rail).paddingBottom) + gap) + "px";
+  }
+
+  // Keep the value rows on one line across the tile row: labels wrap to different
+  // heights, and a bottom-aligned block would ride up wherever the footnote is longer.
+  function equalizeTiles() {
+    var labels = document.querySelectorAll("#kpis .label");
+    Array.prototype.forEach.call(labels, function (l) { l.style.minHeight = ""; });
+    if (window.innerWidth <= 520) return;
+    var h = 0;
+    Array.prototype.forEach.call(labels, function (l) { h = Math.max(h, l.offsetHeight); });
+    Array.prototype.forEach.call(labels, function (l) { l.style.minHeight = h + "px"; });
   }
 
   function renderJourney(i) {
@@ -463,9 +559,13 @@
     document.getElementById("jheadline").textContent = j.headline;
     document.getElementById("lanes").innerHTML =
       renderLane(j.without, "without") + renderLane(j["with"], "with");
+    alignWalls();
 
     document.getElementById("advice-title").textContent =
       "The " + j.merchant + " advice, as the agent received it";
+    document.getElementById("advice-note").textContent =
+      "Confidence: " + j.confidence + " — how much earlier agent experience on " + j.merchant +
+      " this playbook was built from.";
     document.getElementById("advice").innerHTML = j.advice.map(function (r) {
       return '<div class="arow' + (r.decisive ? " arow--decisive" : "") + '">' +
         '<div class="atag">' + esc(r.tag) + "</div>" +
@@ -474,10 +574,7 @@
           codeify(esc(r.text)) +
         "</div>" +
       "</div>";
-    }).join("") +
-    '<div class="arow"><div class="atag">Confidence</div><div class="atext">' +
-      esc(j.confidence) + " — how much prior evidence this merchant's playbook rests on." +
-    "</div></div>";
+    }).join("");
 
     Array.prototype.forEach.call(document.querySelectorAll("#tabs .tab"), function (b, k) {
       b.setAttribute("aria-selected", k === i ? "true" : "false");
@@ -494,46 +591,75 @@
     if (b) renderJourney(+b.dataset.i);
   });
 
-  /* ---------------- bars ---------------- */
-  var bars = [
-    { label: "Without advice", pct: a.without.successPct, n: a.without.success + " of " + a.without.n, side: "without" },
-    { label: "With advice",    pct: a["with"].successPct,  n: a["with"].success + " of " + a["with"].n,  side: "with" },
-    { label: "Without advice", pct: p.withoutPct, n: p.withoutOk + " of " + p.n, side: "without", grp: "Same task, both ways" },
-    { label: "With advice",    pct: p.withPct,    n: p.withOk + " of " + p.n,    side: "with" }
-  ];
-  document.getElementById("bars").innerHTML =
-    '<p style="margin:0 0 16px;font-size:13.5px;color:var(--ink-2)">Purchases completed, all runs</p>' +
-    bars.slice(0, 2).map(barHTML).join("") +
-    '<p style="margin:22px 0 16px;font-size:13.5px;color:var(--ink-2)">Purchases completed, restricted to the ' +
-      p.n + ' tasks run both ways</p>' +
-    bars.slice(2).map(barHTML).join("");
+  var rt;
+  window.addEventListener("resize", function () {
+    clearTimeout(rt);
+    rt = setTimeout(function () { alignWalls(); equalizeTiles(); }, 120);
+  });
+  equalizeTiles();
 
+  /* ---------------- bars ---------------- */
+  // Paired first: it is the stricter read, and the one the headline tiles use.
   function barHTML(b) {
     return '<div class="barrow">' +
-      '<div class="barlabel">' + esc(b.label) + "</div>" +
-      '<div class="bartrack"><div class="bar bar--' + b.side + '" style="width:' + b.pct + '%">' +
-        "<span>" + b.pct + "%</span></div></div>" +
-    "</div>" +
-    '<div style="margin:-8px 0 14px 132px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums">' +
-      esc(b.n) + " runs</div>";
+      '<div class="barlabel"><span class="nm">' + esc(b.label) + swatch(b.side) + "</span>" +
+        '<span class="ct">' + esc(b.n) + " runs</span></div>" +
+      '<div class="bartrack">' +
+        '<div class="bar bar--' + b.side + '" style="width:' + b.pct + '%"></div>' +
+        '<span class="barval">' + b.pct.toFixed(1) + "%</span>" +
+      "</div>" +
+    "</div>";
   }
+  function chartHTML(title, note, rows) {
+    return '<div class="chart">' +
+      '<p class="chart-title">' + title + "</p>" +
+      '<p class="chart-note">' + note + "</p>" +
+      rows.map(barHTML).join("") +
+      '<div class="axis"><span>0%</span><span>50%</span><span>100%</span></div>' +
+    "</div>";
+  }
+  document.getElementById("bars").innerHTML =
+    chartHTML(
+      "Purchases completed — the " + p.n + " tasks that ran both ways",
+      "The stricter read: every task counted here was run once without advice and once with it, " +
+        "so merchant mix cannot move the result.",
+      [
+        { label: "Without advice", pct: p.withoutPct, n: p.withoutOk + " of " + p.n, side: "without" },
+        { label: "With advice",    pct: p.withPct,    n: p.withOk + " of " + p.n,    side: "with" }
+      ]
+    ) +
+    chartHTML(
+      "Purchases completed — all " + STATS.runs + " runs",
+      "The wider read. The two arms have different sizes and slightly different merchant mixes, " +
+        "so treat the gap as directional.",
+      [
+        { label: "Without advice", pct: a.without.successPct, n: a.without.success + " of " + a.without.n, side: "without" },
+        { label: "With advice",    pct: a["with"].successPct,  n: a["with"].success + " of " + a["with"].n,  side: "with" }
+      ]
+    );
 
   /* ---------------- failure-class table ---------------- */
   var fc = STATS.failureClasses;
   document.getElementById("fctable").innerHTML =
-    "<caption>How every run ended. Shown as runs, then share of that arm — the arms have " +
-      "different totals, so the counts alone would mislead. The advised arm never once gave up.</caption>" +
-    "<thead><tr><th>Outcome</th><th>Without advice</th><th>With advice</th></tr></thead><tbody>" +
+    "<caption>How every run ended, as a share of its own arm — the two arms have different " +
+      "totals, so raw counts alone would mislead. The advised arm never once gave up.</caption>" +
+    "<thead><tr><th>Outcome</th>" +
+      '<th><span class="hd">Without advice' + swatch("without") + "</span></th>" +
+      '<th><span class="hd">With advice' + swatch("with") + "</span></th>" +
+    "</tr></thead><tbody>" +
     fc.map(function (r) {
       var zero = r["with"] === 0 && r.without > 0;
       function cell(v, n) {
-        return v + ' <span style="color:var(--muted);font-weight:400">(' + Math.round(100 * v / n) + "%)</span>";
+        return '<span class="pc">' + Math.round(100 * v / n) + "%</span> " +
+          '<span class="ct">' + v + (v === 1 ? " run" : " runs") + "</span>";
       }
-      return "<tr><td>" + esc(r.label) + "</td>" +
-        "<td" + (r.good ? ' class="good"' : "") + ">" + cell(r.without, a.without.n) + "</td>" +
-        "<td" + (r.good ? ' class="good"' : zero ? ' class="zero"' : "") + ">" + cell(r["with"], a["with"].n) + "</td></tr>";
+      return '<tr' + (r.good ? ' class="good"' : "") + "><td>" + esc(r.label) + "</td>" +
+        "<td>" + cell(r.without, a.without.n) + "</td>" +
+        "<td" + (zero ? ' class="zero"' : "") + ">" + cell(r["with"], a["with"].n) + "</td></tr>";
     }).join("") +
-    "<tr><td><b>Total runs</b></td><td><b>" + a.without.n + "</b></td><td><b>" + a["with"].n + "</b></td></tr>" +
+    '<tr class="total"><td>Total runs</td>' +
+      '<td><span class="ct">' + a.without.n + " runs</span></td>" +
+      '<td><span class="ct">' + a["with"].n + " runs</span></td></tr>" +
     "</tbody>";
 
   /* ---------------- theme toggle ---------------- */
@@ -543,7 +669,10 @@
     if (s) return s === "dark";
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   }
-  function sync() { btn.textContent = dark() ? "Light" : "Dark"; }
+  function sync() {
+    btn.textContent = dark() ? "Light" : "Dark";
+    btn.setAttribute("aria-label", "Switch to " + (dark() ? "light" : "dark") + " theme");
+  }
   btn.addEventListener("click", function () {
     document.documentElement.setAttribute("data-theme", dark() ? "light" : "dark");
     sync();
@@ -552,6 +681,8 @@
   sync();
 
   renderJourney(0);
+  // Fonts can land after first paint and change row heights.
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(alignWalls);
 })();
 </script>
 </body>

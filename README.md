@@ -39,7 +39,7 @@ Everything on the page comes from real runs against live merchant sites
 (Sep 10–14, 2026). Before publishing:
 
 - Buyer name, street address, phone and email are replaced with a generic persona.
-- Merchant order numbers, spend-request IDs and card digits are masked.
+- Merchant order numbers and spend-request IDs are masked; card digits are dropped.
 - The wallet product's internal name is replaced with "wallet" throughout,
   including inside the quoted playbook text.
 
