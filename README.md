@@ -24,6 +24,9 @@ the "All runs" section, along with the method and its caveats.
 
 - `index.html` — the whole page: markup, styles, and rendering. No dependencies, no build.
 - `data.js` — the journey steps and aggregate numbers, extracted from the run records.
+- `og.html` → `og.png` — source and output for the social share card. Re-render by opening
+  `og.html` at a 1200×630 viewport and screenshotting `#card`; `og.png` is committed because
+  Twitter and Slack fetch it by absolute URL.
 
 ## Running locally
 
@@ -44,3 +47,7 @@ Everything on the page comes from real runs against live merchant sites
   including inside the quoted playbook text.
 
 Nothing else in the quoted advice or the agents' milestone notes is reworded.
+
+The three diagrams in "How advice works" are drawings, not screenshots — no capture of a live
+merchant page is published, and every number in them comes from the run timestamps. The figure
+comments in `index.html` record which timestamp each mark is placed from.

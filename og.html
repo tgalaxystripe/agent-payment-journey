@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>og:image source — 1200×630</title>
+<!--
+  Source for og.png, the social share card. Render at exactly 1200x630 and screenshot #card:
+
+    node -e "…playwright… page.setViewportSize({width:1200,height:630});
+             page.screenshot({path:'og.png', clip:{x:0,y:0,width:1200,height:630}})"
+
+  The figure below is a copy of the eBay diagram from index.html. A share image is a snapshot by
+  nature, so it does not track that file automatically — re-render if the diagram changes.
+-->
+<style>
+  :root {
+    --surface-1: #fcfcfb; --plane: #f9f9f7; --ink: #0b0b0b; --ink-2: #52514e;
+    --muted: #898781; --grid: #e1e0d9; --baseline: #c3c2b7; --ring: rgba(11,11,11,0.10);
+    --with: #2a78d6; --without: #898781; --good-ink: #006300; --wash: rgba(42,120,214,0.07);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--plane); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  /* Headline runs the full width so it breaks into two even lines; the claim and the numbers
+     then sit beside the figure, and the source line holds the baseline. */
+  #card {
+    width: 1200px; height: 630px; padding: 60px 68px 52px; display: flex; flex-direction: column;
+    background: var(--plane); color: var(--ink);
+  }
+  .eyebrow { font-size: 16px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 18px; }
+  h1 { font-size: 57px; line-height: 1.06; letter-spacing: -.028em; font-weight: 650; margin: 0 0 30px; }
+  .body { flex: 1; display: grid; grid-template-columns: 1fr 400px; gap: 48px; align-items: center; }
+  .claim { font-size: 24px; line-height: 1.35; color: var(--ink-2); margin: 0 0 32px; }
+  .stats { display: flex; gap: 44px; }
+  .stat .k { font-size: 14px; color: var(--muted); margin-bottom: 7px; }
+  .stat .v { display: flex; align-items: baseline; gap: 10px; font-variant-numeric: tabular-nums; }
+  .stat .a { font-size: 24px; font-weight: 500; color: var(--muted); }
+  .stat .ar { font-size: 17px; color: var(--muted); }
+  .stat .b { font-size: 38px; font-weight: 650; letter-spacing: -.02em; }
+  .src { font-size: 15px; color: var(--muted); margin: 22px 0 0; display: flex; gap: 10px; }
+  .src .u { color: var(--ink-2); }
+  .fig { width: 100%; height: auto; display: block; }
+  .fig text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .fig .sm { font-size: 10px; fill: var(--muted); }
+  .fig .st { font-size: 11.5px; fill: var(--ink); font-weight: 650; }
+  .fig .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9.5px; fill: var(--muted); }
+</style>
+</head>
+<body>
+<div id="card">
+  <p class="eyebrow">Agentic checkout · A/B evaluation</p>
+  <h1>An agent’s payment journey,<br>with and without advice</h1>
+
+  <div class="body">
+    <div>
+      <!-- broken by hand: one clause per line beats a ragged wrap with "door." orphaned -->
+      <p class="claim">Both agents hit the same sign-in wall.<br>Only one knew there was a door.</p>
+      <div class="stats">
+        <div class="stat">
+          <div class="k">Purchases completed</div>
+          <div class="v"><span class="a">20/28</span><span class="ar">&rarr;</span><span class="b">24/28</span></div>
+        </div>
+        <div class="stat">
+          <div class="k">Gave up or timed out</div>
+          <div class="v"><span class="a">9</span><span class="ar">&rarr;</span><span class="b">0</span></div>
+        </div>
+      </div>
+    </div>
+
+  <svg class="fig" viewBox="0 0 320 200" role="img" aria-label="Diagram: the eBay sign-in page offers no guest option, but its own gchru parameter holds the guest checkout URL">
+    <rect x="6" y="6" width="308" height="188" rx="10" fill="var(--surface-1)" stroke="var(--grid)"/>
+    <path d="M6 36H314" stroke="var(--grid)"/>
+    <rect x="16" y="14" width="200" height="14" rx="7" fill="var(--plane)" stroke="var(--grid)"/>
+    <text class="mono" x="23" y="24">signin.ebay.com/…?</text>
+    <rect x="131" y="14.5" width="52" height="13" rx="4" fill="var(--wash)" stroke="var(--with)"/>
+    <text class="mono" x="157" y="24.5" text-anchor="middle" fill="var(--with)" font-weight="600">gchru=</text>
+
+    <text class="st" x="20" y="58">Sign in</text>
+    <rect x="20" y="66" width="136" height="17" rx="5" fill="var(--plane)" stroke="var(--grid)"/>
+    <rect x="20" y="89" width="136" height="17" rx="5" fill="var(--plane)" stroke="var(--grid)"/>
+    <rect x="20" y="114" width="136" height="19" rx="6" fill="var(--without)"/>
+    <text x="88" y="127" text-anchor="middle" font-size="10" font-weight="600" fill="var(--surface-1)">Continue</text>
+    <text class="sm" x="20" y="152">No guest option here</text>
+
+    <path d="M157 30C157 50 168 52 170 72C172 96 168 114 176 130" fill="none" stroke="var(--with)" stroke-width="1.6"/>
+    <path d="M170 126l7 6-7 6" fill="none" stroke="var(--with)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="182" y="104" width="120" height="62" rx="8" fill="var(--wash)" stroke="var(--with)"/>
+    <text x="192" y="129" font-size="11" font-weight="650" fill="var(--with)">Guest checkout</text>
+    <text class="sm" x="192" y="145">Review order · $9.25</text>
+  </svg>
+  </div>
+
+  <p class="src">
+    <span class="u">tgalaxystripe.github.io/agent-payment-journey</span>
+    <span>85 real purchase runs · 13 merchants · Sep 2026</span>
+  </p>
+</div>
+</body>
+</html>

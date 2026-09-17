@@ -134,7 +134,7 @@ const JOURNEYS = [
     item: "Cashmere comb, natural wood",
     price: "$10.00",
     cap: "$25.00",
-    headline: "Same purchase, same approval. One agent burned its entire time budget getting there.",
+    headline: "Both agents got the card approved. One then spent its whole time budget not using it.",
     without: {
       outcome: "fail",
       verdict: "Killed at the working-time limit",

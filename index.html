@@ -6,9 +6,18 @@
 <title>An agent’s payment journey, with and without advice</title>
 <link rel="icon" href="data:,">
 <meta name="description" content="Three real agent checkout runs, each executed twice — once with merchant-specific advice in the prompt, once without.">
+<meta property="og:type" content="article">
 <meta property="og:title" content="An agent’s payment journey, with and without advice">
 <meta property="og:description" content="Both agents hit the same sign-in wall. Only one knew there was a door.">
+<!-- og:image and og:url must be absolute — Twitter and Slack fetch them from their own servers,
+     so a relative path resolves against nothing. Card source is og.html; re-render if it changes. -->
+<meta property="og:url" content="https://tgalaxystripe.github.io/agent-payment-journey/">
+<meta property="og:image" content="https://tgalaxystripe.github.io/agent-payment-journey/og.png">
+<meta property="og:image:width" content="2400">
+<meta property="og:image:height" content="1260">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://tgalaxystripe.github.io/agent-payment-journey/og.png">
+<meta name="twitter:image:alt" content="An agent’s payment journey, with and without advice. Purchases completed rose from 20 of 28 to 24 of 28; runs where the agent gave up or timed out fell from 9 to 0.">
 <style>
   :root {
     color-scheme: light;
@@ -97,6 +106,7 @@
   h2 { font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 4px; }
   .h2sub { font-size: 20px; font-weight: 600; letter-spacing: -.01em; margin: 0 0 6px; color: var(--ink); }
   .h2note { font-size: 13.5px; color: var(--muted); margin: 0 0 20px; max-width: 74ch; }
+  .h2sub--last { margin-bottom: 22px; }
   section { margin-top: 68px; }
 
   /* ---------- KPI row ---------- */
@@ -153,6 +163,12 @@
   .icon { width: 14px; height: 14px; flex: none; }
 
   .steps { list-style: none; margin: 0; padding: 6px 0 12px; --tcol: 66px; --tpad: 18px; --tgap: 12px; }
+  /* Steps rise in as the lane scrolls into view, so the two runs visibly build alongside each
+     other. The class is added by script only when it will definitely be un-hidden again, so no
+     code path can leave the lanes blank. Opacity/transform only — layout is untouched, which
+     matters because alignWalls() measures these rows. */
+  .steps--anim .step { opacity: 0; transform: translateY(7px); transition: opacity .4s ease var(--sd, 0s), transform .4s ease var(--sd, 0s); }
+  .steps--anim.in .step { opacity: 1; transform: none; }
   .step { display: grid; grid-template-columns: var(--tcol) 1fr; gap: var(--tgap); padding: 9px var(--tpad); position: relative; }
   .step .t { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; padding-top: 2px; white-space: nowrap; }
   .step .body { border-left: 2px solid var(--grid); padding-left: 15px; padding-bottom: 2px; }
@@ -219,6 +235,59 @@
   .atext code.cblock { display: block; margin: 7px 0; padding: 8px 11px; line-height: 1.5; }
   .adecisive-note { font-size: 12px; font-weight: 600; color: var(--with); display: block; margin-bottom: 3px; letter-spacing: .04em; text-transform: uppercase; }
 
+  /* ---------- principles ---------- */
+  .prin { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .pcard {
+    background: var(--surface-1); border: 1px solid var(--ring); border-radius: 14px;
+    padding: 16px 18px 18px; display: flex; flex-direction: column;
+  }
+  .pnum { font-size: 11px; font-weight: 650; letter-spacing: .09em; color: var(--muted); }
+  .ptitle { font-size: 16.5px; font-weight: 650; letter-spacing: -.015em; margin: 1px 0 12px; }
+  .pbody { font-size: 13px; color: var(--ink-2); margin: 12px 0 14px; }
+  .pbody b { color: var(--ink); font-weight: 600; }
+  .pbody code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px;
+    background: var(--plane); border: 1px solid var(--ring); border-radius: 4px; padding: 0 4px;
+  }
+  .plink {
+    margin-top: auto; align-self: flex-start; background: none; border: 0; padding: 0;
+    font: inherit; font-size: 12.5px; font-weight: 600; color: var(--with); cursor: pointer;
+  }
+  .plink:hover { text-decoration: underline; }
+
+  /* Figures: the merchant page as the agent found it is drawn statically; only the layer
+     advice adds is animated in, so a browser that never fires the observer still shows
+     a truthful base state. */
+  .fig { display: block; width: 100%; height: auto; }
+  .fig text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .fig .sm  { font-size: 10px;   fill: var(--muted); }
+  .fig .md  { font-size: 11.5px; fill: var(--ink-2); }
+  .fig .st  { font-size: 11.5px; fill: var(--ink); font-weight: 650; }
+  .fig .acc { fill: var(--with); font-weight: 600; }
+  .fig .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9.5px; fill: var(--muted); }
+
+  .fig .pop   { opacity: 0; transition: opacity .45s ease var(--d, 0s); }
+  .fig .draw  { stroke-dasharray: 100; stroke-dashoffset: 100; transition: stroke-dashoffset .8s ease var(--d, 0s); }
+  .fig .grow  { transform: scaleX(0); transform-origin: var(--ox, 0) 0; transition: transform .85s ease var(--d, 0s); }
+  .fig .dim   { transition: opacity .5s ease var(--d, 0s); }
+  .fig .was   { transition: opacity .35s ease var(--d, 0s); }
+  .fig .now   { opacity: 0; transition: opacity .35s ease var(--d, 0s); }
+  .fig.in .pop  { opacity: 1; }
+  .fig.in .draw { stroke-dashoffset: 0; }
+  .fig.in .grow { transform: scaleX(1); }
+  .fig.in .dim  { opacity: .4; }
+  .fig.in .was  { opacity: 0; }
+  .fig.in .now  { opacity: 1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fig .pop, .fig .draw, .fig .grow, .fig .dim, .fig .was, .fig .now { transition: none; }
+    .fig .pop, .fig .now { opacity: 1; }
+    .fig .draw { stroke-dashoffset: 0; }
+    .fig .grow { transform: none; }
+    .fig .dim { opacity: .4; }
+    .fig .was { opacity: 0; }
+  }
+
   /* ---------- bars ---------- */
   .chart { background: var(--surface-1); border: 1px solid var(--ring); border-radius: 14px; padding: 22px 26px 18px; --labcol: 136px; }
   .chart + .chart { margin-top: 16px; }
@@ -269,6 +338,9 @@
   @media (max-width: 860px) {
     .kpis { grid-template-columns: repeat(2, 1fr); }
     .lanes { grid-template-columns: 1fr; }
+    /* one per row: cap the figure so it doesn't scale up into a sparse billboard */
+    .prin { grid-template-columns: 1fr; }
+    .fig { max-width: 420px; }
     .wrap { padding: 28px 16px 72px; }
     .chart { padding: 20px 18px 16px; --labcol: 118px; }
   }
@@ -296,28 +368,34 @@
   </div>
 
   <p class="lede">
-    An AI agent was given a shopping task and a wallet, and told to buy one specific item.
-    Then the same task was run again — identical model, identical browser, identical budget — with
-    one extra paragraph in the prompt: <b>a short playbook for that merchant’s checkout</b>,
-    written from what earlier agents had already learned there.
+    We gave an AI agent a wallet and one job: buy a specific item from a specific store. Then we ran
+    the same task again with one paragraph added to the prompt — <b>a short playbook for that store’s
+    checkout</b>, written from what earlier agents hit there. Nothing else changed.
   </p>
-  <p class="lede">Everything below is from those real runs.</p>
+  <p class="lede">Real purchases on live merchant sites, not a simulation.</p>
   <p class="provenance" id="provenance"></p>
 
   <!-- ================= HEADLINE NUMBERS ================= -->
   <section>
     <h2>The headline</h2>
-    <p class="h2sub">What one paragraph of merchant advice changed</p>
-    <p class="h2note">Each tile reads left to right: the unadvised run, then the advised one.</p>
+    <p class="h2sub h2sub--last">What one paragraph of advice changed</p>
     <div class="kpis" id="kpis"></div>
   </section>
 
-  <!-- ================= THE JOURNEYS ================= -->
+  <!-- ================= PRINCIPLES ================= -->
   <section>
+    <h2>How advice works</h2>
+    <p class="h2sub">Three things the playbook knew in advance</p>
+    <p class="h2note">Each of these cost an unadvised agent a run.</p>
+    <div class="prin" id="prin"></div>
+  </section>
+
+  <!-- ================= THE JOURNEYS ================= -->
+  <section id="journeys">
     <h2>Side by side</h2>
-    <p class="h2sub">One purchase, two journeys</p>
-    <p class="h2note">Every line below is a milestone the agent reported as it worked. Times are from the
-      start of the run.</p>
+    <p class="h2sub">The same purchase, run twice</p>
+    <p class="h2note">Each line is a milestone the agent logged as it worked, timed from the start of
+      the run.</p>
     <div class="tabs" id="tabs" role="tablist"></div>
     <p class="taskline" id="taskline"></p>
     <p class="headline" id="jheadline"></p>
@@ -335,9 +413,8 @@
   <!-- ================= AGGREGATE ================= -->
   <section>
     <h2>All runs</h2>
-    <p class="h2sub">It isn’t just these three</p>
-    <p class="h2note">Two reads of the same 85 runs. The paired one is stricter, and it is the number
-      to quote.</p>
+    <p class="h2sub">What happened across all 85 runs</p>
+    <p class="h2note">Two reads of the same runs. Quote the paired one — it’s stricter.</p>
     <div id="bars"></div>
 
     <div class="chart" style="margin-top:16px">
@@ -348,11 +425,11 @@
       <summary>Method, and what these numbers do and don’t show</summary>
       <div class="method-body">
         <ul>
-          <li><b>What a run is.</b> One agent, one real browser, one real merchant site, one real card, told to buy one specific item under a spending cap. A run counts as a success only on a merchant order confirmation — not on the agent’s own say-so.</li>
-          <li><b>What “advice” is.</b> A short, merchant-specific playbook appended to the prompt: the checkout’s URL sequence, its known traps, how its confirmation page looks, and when to ask the human. It is assembled from what previous agents observed on that site. Nothing about the model, tools, or permissions changes between arms.</li>
-          <li><b>The paired numbers are the honest ones.</b> The two arms aren’t perfectly balanced (46 unadvised vs 34 advised runs across several rounds), so the headline rates can drift on merchant mix. Restricting to the <b>28 cases where the same task ran both ways</b> gives 20/28 → 24/28. Advice fixed 5 runs and broke 1.</li>
-          <li><b>Human approval time is excluded from working time.</b> Every purchase pauses for a human to approve the wallet spend request. That wait ranged from 11 seconds to 10 minutes and is not the agent’s doing, so the time figures count only the agent’s own active work.</li>
-          <li><b>Caveats.</b> Small n. Live commercial sites that change under you. Two model versions across rounds. Merchants were chosen because agents already struggled there, so the unadvised baseline is not a general “agents can’t check out” rate. All three journeys shown are cases where the unadvised run failed — the interesting case, not the typical one; unadvised runs completed 67% of the time overall.</li>
+          <li><b>What a run is.</b> One agent with a real browser, a real merchant site and a real card, told to buy a specific item under a spending cap. It counts as a success only when the merchant shows an order confirmation, not when the agent says it succeeded.</li>
+          <li><b>What “advice” is.</b> A short playbook for one merchant, appended to the prompt: the checkout’s URL sequence, its known traps, what its confirmation page looks like, and when to ask the human. It comes from what earlier agents saw on that site. The model, tools and permissions are the same in both arms.</li>
+          <li><b>The paired numbers are the honest ones.</b> The arms aren’t balanced (46 unadvised runs against 34 advised, across several rounds), so the headline rates can drift on merchant mix. Restricting to the <b>28 tasks that ran both ways</b> gives 20/28 → 24/28: advice fixed 5 runs and broke 1.</li>
+          <li><b>Approval time is excluded.</b> Every purchase pauses for a human to approve the wallet spend request. Those waits ran from 11 seconds to 10 minutes and aren’t the agent’s doing, so the times here count only the agent’s own work.</li>
+          <li><b>Caveats.</b> Small n, live commercial sites that change under you, two model versions across rounds. Merchants were picked because agents already struggled there, so the unadvised baseline is not a general “agents can’t check out” rate. All three journeys shown are ones the unadvised run failed — the interesting case, not the typical one. Unadvised runs finished 67% of the time overall.</li>
         </ul>
       </div>
     </details>
@@ -415,8 +492,8 @@
     " · " + a.without.n + " without advice, " + a["with"].n + " with";
   document.getElementById("footer").innerHTML =
     "Real runs against live merchant sites. Buyer details, order numbers, spend-request IDs and card digits are redacted. " +
-    "Merchant playbook text and the agents&rsquo; own milestone notes are reproduced from the runs themselves, with one substitution " +
-    "throughout: the wallet product&rsquo;s internal name is replaced with &ldquo;wallet&rdquo;.";
+    "The playbook text and the agents&rsquo; own milestone notes are reproduced from the runs, with one substitution: the wallet " +
+    "product&rsquo;s internal name is replaced with &ldquo;wallet&rdquo; throughout. The three diagrams are drawings, not screenshots.";
 
   /* ---------------- KPI tiles ---------------- */
   var p = STATS.paired;
@@ -429,7 +506,7 @@
       foot: "advice fixed 5 runs, broke 1"
     },
     {
-      label: "Runs where the agent gave up or ran out of time",
+      label: "Runs where the agent gave up or timed out",
       without: a.without.abandoned,
       with: a["with"].abandoned,
       delta: "down to zero",
@@ -465,15 +542,184 @@
     "</div>";
   }).join("");
 
+  /* ---------------- scroll reveal ----------------
+     One observer for every animated block on the page: each is marked "in" the first time it
+     scrolls into view and then left alone. If observers are unavailable, or the reader asked for
+     reduced motion, targets are marked immediately so nothing stays half-drawn. */
+  var STILL = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  var revealIO = ("IntersectionObserver" in window) && !STILL
+    ? new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return;
+          en.target.classList.add("in");
+          revealIO.unobserve(en.target);
+        });
+      }, { threshold: 0.25 })
+    : null;
+  function watchReveal(nodes) {
+    Array.prototype.forEach.call(nodes, function (n) {
+      if (revealIO) revealIO.observe(n);
+      else n.classList.add("in");
+    });
+  }
+
+  /* ---------------- principle figures ----------------
+     One shared visual grammar for all three: a schematic merchant window, the page as the
+     agent actually found it drawn in flat ink, and the single thing advice adds drawn in the
+     accent and animated in when the figure scrolls into view. viewBox is 320 wide so that at
+     the ~300px card width the SVG renders near 1:1 and the type sizes hold. */
+  function frame(url, chip) {
+    return '<rect x="6" y="6" width="308" height="188" rx="10" fill="var(--surface-1)" stroke="var(--grid)"/>' +
+      '<path d="M6 36H314" stroke="var(--grid)"/>' +
+      '<rect x="16" y="14" width="200" height="14" rx="7" fill="var(--plane)" stroke="var(--grid)"/>' +
+      '<text class="mono" x="23" y="24">' + url + "</text>" + (chip || "");
+  }
+
+  var FIG_EBAY =
+    '<svg class="fig" viewBox="0 0 320 200" role="img" aria-label="Diagram: the eBay sign-in page ' +
+      'offers no guest option, but its own gchru parameter holds the guest checkout URL">' +
+    frame("signin.ebay.com/…?",
+      '<rect class="pop" style="--d:.1s" x="131" y="14.5" width="52" height="13" rx="4" fill="var(--wash)" stroke="var(--with)"/>' +
+      '<text class="mono acc pop" style="--d:.1s" x="157" y="24.5" text-anchor="middle" fill="var(--with)">gchru=</text>') +
+    /* the wall */
+    '<text class="st" x="20" y="58">Sign in</text>' +
+    '<rect x="20" y="66" width="136" height="17" rx="5" fill="var(--plane)" stroke="var(--grid)"/>' +
+    '<rect x="20" y="89" width="136" height="17" rx="5" fill="var(--plane)" stroke="var(--grid)"/>' +
+    '<rect x="20" y="114" width="136" height="19" rx="6" fill="var(--without)"/>' +
+    '<text x="88" y="127" text-anchor="middle" font-size="10" font-weight="600" fill="var(--surface-1)">Continue</text>' +
+    '<text class="sm" x="20" y="152">No guest option here</text>' +
+    /* the door */
+    /* routed to the right of the sign-in form (which ends at x=156) so the two don't tangle */
+    '<path class="draw" style="--d:.35s" d="M157 30C157 50 168 52 170 72C172 96 168 114 176 130" pathLength="100" fill="none" stroke="var(--with)" stroke-width="1.6"/>' +
+    '<path class="pop" style="--d:1.1s" d="M170 126l7 6-7 6" fill="none" stroke="var(--with)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<g class="pop" style="--d:.95s">' +
+      '<rect x="182" y="104" width="120" height="62" rx="8" fill="var(--wash)" stroke="var(--with)"/>' +
+      '<text x="192" y="129" font-size="11" font-weight="650" fill="var(--with)">Guest checkout</text>' +
+      '<text class="sm" x="192" y="145">Review order · $9.25</text>' +
+    "</g>" +
+    "</svg>";
+
+  var FIG_WESTELM =
+    '<svg class="fig" viewBox="0 0 320 200" role="img" aria-label="Diagram: the West Elm cart already ' +
+      'holds a stray 16 dollar pot holder beside the candle, dropping the subtotal from 23 to 7 dollars once removed">' +
+    frame("westelm.com/checkout") +
+    '<text class="st" x="20" y="58">Your cart</text>' +
+    /* The stray item stays on the diagram, struck through and dimmed — if it slid away, the
+       resting state would show a clean cart and lose the whole point. Strike sits outside the
+       dimmed group so it stays legible. */
+    '<g class="dim" style="--d:.55s">' +
+      '<rect x="20" y="66" width="24" height="24" rx="4" fill="var(--grid)"/>' +
+      '<text class="md" x="52" y="82">Dogs Pot Holder</text>' +
+      '<text class="md" x="302" y="82" text-anchor="end">$16.00</text>' +
+    "</g>" +
+    '<path class="draw" style="--d:.2s" d="M52 78H302" pathLength="100" fill="none" stroke="var(--critical)" stroke-width="1.4"/>' +
+    '<rect x="20" y="98" width="24" height="24" rx="4" fill="var(--grid)"/>' +
+    '<text class="md" x="52" y="114">Ivory pillar candle</text>' +
+    '<text class="md" x="302" y="114" text-anchor="end">$7.00</text>' +
+    '<path d="M20 136H302" stroke="var(--grid)"/>' +
+    '<text class="sm" x="20" y="155">Subtotal</text>' +
+    '<text class="md was" style="--d:.8s" x="302" y="155" text-anchor="end">$23.00</text>' +
+    '<text class="acc now" style="--d:1s" x="302" y="155" text-anchor="end" font-size="12.5">$7.00</text>' +
+    '<g class="pop" style="--d:1.2s">' +
+      '<rect x="20" y="164" width="92" height="18" rx="5" fill="var(--wash)" stroke="var(--with)"/>' +
+      '<text class="acc" x="66" y="176.5" text-anchor="middle" font-size="9.5">removed in 56 s</text>' +
+    "</g>" +
+    "</svg>";
+
+  /* One shared clock: x=20 is 0:00 and x=300 is 15:00 into the run, so 18.67 units = 1 minute.
+     Every mark below is placed from the run's own timestamps:
+       hold  0:36 → 10:36   checkout loaded, reservation started       x=31 → x=216
+       without  asked 3:53, approved 14:34                             x=92 → x=290
+       with     asked 2:00, approved 2:11                              x=57 → x=60
+     Text sits either left of x=216 or right-aligned past it, so the dashed hold-expiry line can
+     run the full height without crossing a label. */
+  var FIG_QUINCE =
+    '<svg class="fig" viewBox="0 0 320 200" role="img" aria-label="Diagram: Quince reserves the order ' +
+      'for ten minutes. The unadvised run asked for approval at 3:53 and waited 10 minutes 41 seconds, ' +
+      'so approval landed at 14:34 — after the reservation had already expired. The advised run asked ' +
+      'at 2:00 and waited 11 seconds, well inside the hold.">' +
+    frame("quince.com/checkout") +
+    '<rect x="16" y="46" width="288" height="20" rx="6" fill="var(--plane)" stroke="var(--grid)"/>' +
+    '<text class="sm" x="25" y="60">Your order is reserved for 10:00 minutes</text>' +
+    /* the hold window, and where it runs out */
+    '<text class="acc" x="31" y="78" font-size="9.5">order held · 10:00</text>' +
+    '<rect x="31" y="82" width="185" height="8" rx="4" fill="var(--wash)" stroke="var(--with)" stroke-opacity=".4"/>' +
+    '<path d="M216 82V168" stroke="var(--baseline)" stroke-dasharray="3 3"/>' +
+    /* Each row: a tick where the agent asked, a bar as long as the wait, and an outcome mark at
+       the end. The bar's right edge is when approval landed, so crossing the dashed line is the
+       failure — read straight off the drawing. */
+    '<text class="md" x="20" y="104" font-size="10.5" font-weight="600">without advice</text>' +
+    '<text class="md" x="300" y="104" font-size="10.5" text-anchor="end">waited 10 m 41 s</text>' +
+    '<path d="M20 116H300" stroke="var(--grid)"/>' +
+    '<path d="M92 109V123" stroke="var(--without)" stroke-width="1.4"/>' +
+    '<rect class="grow" style="--d:.15s;--ox:92px" x="92" y="112.5" width="198" height="7" rx="3.5" fill="var(--without)"/>' +
+    '<path class="pop" style="--d:1s" d="M290 112l7 7M297 112l-7 7" stroke="var(--critical)" stroke-width="1.8" stroke-linecap="round"/>' +
+    /* Asked early, approved 11 s later: at this scale that is 3 units, so the mark is the tick and
+       the check sitting almost on top of each other. That near-zero gap IS the finding. */
+    '<text class="acc" x="20" y="140" font-size="10.5" font-weight="600">with advice</text>' +
+    '<text class="acc" x="300" y="140" font-size="10.5" text-anchor="end">waited 11 s</text>' +
+    '<path d="M20 152H300" stroke="var(--grid)"/>' +
+    '<path d="M57 145V159" stroke="var(--with)" stroke-width="1.4"/>' +
+    '<g class="pop" style="--d:1.15s">' +
+      '<rect x="57" y="148.5" width="4" height="7" rx="2" fill="var(--with)"/>' +
+      '<path d="M64 152l3.5 3.5 6-7" fill="none" stroke="var(--with)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+    "</g>" +
+    '<path d="M20 168H300" stroke="var(--baseline)"/>' +
+    '<text class="sm" x="20" y="182">0:00</text>' +
+    '<text class="sm" x="300" y="182" text-anchor="end">15:00 into the run</text>' +
+    "</svg>";
+
+  // Bodies are authored HTML (they carry <code> and entities), not run data — not escaped.
+  var PRINCIPLES = [
+    {
+      n: "01", j: 0, title: "The wall has a door", fig: FIG_EBAY, link: "The eBay run",
+      body: "Signed out, eBay&rsquo;s Buy It Now bounces the agent to a sign-in page with no guest " +
+        "option on it. The way through is written on the wall: that page&rsquo;s own <code>gchru</code> " +
+        "parameter holds the guest-checkout URL. The unadvised agent read a dead end and left for Target."
+    },
+    {
+      n: "02", j: 1, title: "The cart is not empty", fig: FIG_WESTELM, link: "The West Elm run",
+      body: "The West Elm cart already had a $16 pot holder sitting in it. The advised agent checked " +
+        "the cart before checkout and cleared it 56 seconds in. The unadvised agent found out twelve " +
+        "minutes in, and never reached checkout at all."
+    },
+    {
+      n: "03", j: 2, title: "Ask before the hold expires", fig: FIG_QUINCE, link: "The Quince run",
+      body: "Quince holds an order for ten minutes, and every purchase pauses for a human to approve " +
+        "the card. Ask late and the wait outlasts the hold — an 11-minute wait had already cost one " +
+        "run. So the advice is to request approval the moment the total appears."
+    }
+  ];
+
+  document.getElementById("prin").innerHTML = PRINCIPLES.map(function (c) {
+    return '<div class="pcard">' +
+      '<div class="pnum">' + c.n + "</div>" +
+      '<div class="ptitle">' + c.title + "</div>" +
+      c.fig +
+      '<p class="pbody">' + c.body + "</p>" +
+      '<button class="plink" type="button" data-j="' + c.j + '">' + c.link + " &rarr;</button>" +
+    "</div>";
+  }).join("");
+
+  document.getElementById("prin").addEventListener("click", function (e) {
+    var b = e.target.closest(".plink");
+    if (!b) return;
+    renderJourney(+b.dataset.j);
+    document.getElementById("journeys").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  watchReveal(document.querySelectorAll("#prin .fig"));
+
   /* ---------------- journeys ---------------- */
   var current = 0;
 
-  function renderStep(s) {
+  function renderStep(s, i) {
     var cls = "step step--" + s.kind;
+    var sd = ' style="--sd:' + Math.min(i * 0.055, 0.55).toFixed(3) + 's"';
     // A wait is a gap in the story, not a milestone: the duration is the label and the
     // elapsed column stays empty so it doesn't repeat the step above it.
     if (s.kind === "wait") {
-      return '<li class="' + cls + '">' +
+      return '<li class="' + cls + '"' + sd + ">" +
         '<span class="t"></span>' +
         '<span class="body">' +
           '<span class="lbl">Paused <b>' + clock(s.waitUntil - s.t) + "</b> — waiting on human approval</span>" +
@@ -482,7 +728,7 @@
       "</li>";
     }
     var flag = s.kind === "wall" ? '<span class="flag">Same obstacle</span>' : "";
-    return '<li class="' + cls + '">' +
+    return '<li class="' + cls + '"' + sd + ">" +
       '<span class="dot" aria-hidden="true"></span>' +
       '<span class="t">+' + clock(s.t) + "</span>" +
       '<span class="body">' + flag +
@@ -502,7 +748,8 @@
         '<div class="lane-meta">' + clock(arm.activeS) + " of agent working time · " +
           arm.toolCalls + " browser actions</div>" +
       "</div>" +
-      '<ul class="steps">' + arm.steps.map(renderStep).join("") + "</ul>" +
+      '<ul class="steps' + (revealIO ? " steps--anim" : "") + '">' +
+        arm.steps.map(renderStep).join("") + "</ul>" +
       '<div class="lane-ft lane-ft--' + (ok ? "ok" : "fail") + '">' +
         (ok ? ICON_OK : ICON_FAIL) + "<span>" + esc(arm.verdict) + "</span>" +
       "</div>" +
@@ -560,17 +807,18 @@
     document.getElementById("lanes").innerHTML =
       renderLane(j.without, "without") + renderLane(j["with"], "with");
     alignWalls();
+    watchReveal(document.querySelectorAll("#lanes .steps"));
 
     document.getElementById("advice-title").textContent =
       "The " + j.merchant + " advice, as the agent received it";
     document.getElementById("advice-note").textContent =
-      "Confidence: " + j.confidence + " — how much earlier agent experience on " + j.merchant +
-      " this playbook was built from.";
+      "Rated " + j.confidence + " confidence — the harness’s own measure of how much earlier agent " +
+      "experience at " + j.merchant + " it rests on.";
     document.getElementById("advice").innerHTML = j.advice.map(function (r) {
       return '<div class="arow' + (r.decisive ? " arow--decisive" : "") + '">' +
         '<div class="atag">' + esc(r.tag) + "</div>" +
         '<div class="atext">' +
-          (r.decisive ? '<span class="adecisive-note">The line that made the difference</span>' : "") +
+          (r.decisive ? '<span class="adecisive-note">The decisive line</span>' : "") +
           codeify(esc(r.text)) +
         "</div>" +
       "</div>";
@@ -621,8 +869,7 @@
   document.getElementById("bars").innerHTML =
     chartHTML(
       "Purchases completed — the " + p.n + " tasks that ran both ways",
-      "The stricter read: every task counted here was run once without advice and once with it, " +
-        "so merchant mix cannot move the result.",
+      "Every task here ran once without advice and once with it, so merchant mix can&rsquo;t move the result.",
       [
         { label: "Without advice", pct: p.withoutPct, n: p.withoutOk + " of " + p.n, side: "without" },
         { label: "With advice",    pct: p.withPct,    n: p.withOk + " of " + p.n,    side: "with" }
@@ -630,8 +877,7 @@
     ) +
     chartHTML(
       "Purchases completed — all " + STATS.runs + " runs",
-      "The wider read. The two arms have different sizes and slightly different merchant mixes, " +
-        "so treat the gap as directional.",
+      "The arms differ in size and merchant mix, so read this gap as directional only.",
       [
         { label: "Without advice", pct: a.without.successPct, n: a.without.success + " of " + a.without.n, side: "without" },
         { label: "With advice",    pct: a["with"].successPct,  n: a["with"].success + " of " + a["with"].n,  side: "with" }
@@ -641,8 +887,8 @@
   /* ---------------- failure-class table ---------------- */
   var fc = STATS.failureClasses;
   document.getElementById("fctable").innerHTML =
-    "<caption>How every run ended, as a share of its own arm — the two arms have different " +
-      "totals, so raw counts alone would mislead. The advised arm never once gave up.</caption>" +
+    "<caption>How every run ended, as a share of its own arm; the totals differ, so raw counts " +
+      "would mislead. No advised run gave up.</caption>" +
     "<thead><tr><th>Outcome</th>" +
       '<th><span class="hd">Without advice' + swatch("without") + "</span></th>" +
       '<th><span class="hd">With advice' + swatch("with") + "</span></th>" +
